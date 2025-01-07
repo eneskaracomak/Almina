@@ -42,7 +42,7 @@ class _HomeState  extends State<Home> {
 void getNotifications() async {
           SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    String? phone = prefs.getString('userPhone');  // SharedPreferences'ten telefon numarasını alıyoruz
+    String? phone = prefs.getString('userPhone'); 
   List<Map<String, dynamic>> notifications = await _firebaseService.fetchUserNotifications(phone!);
   var setting2 = await _firebaseService.fetchSettingsFromDatabase();
   setState(() {
