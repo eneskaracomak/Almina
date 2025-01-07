@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "46077947870",
+    "project_id": "alminacafe-a474e",
+    "storage_bucket": "alminacafe-a474e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46077947870:android:bccc5fc93e1b9c6e8eb74f",
+        "android_client_info": {
+          "package_name": "com.alminacafe.alminacafe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrkzqQ8u6jhOKcmBMsT5pNakxGXxEeTRs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
