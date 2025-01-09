@@ -88,7 +88,7 @@ class SuccessPage extends StatelessWidget {
       int index = entry.key + 1; // Liste numaralandırması için
       CartItem item = entry.value;
       return Text(
-        "$index. ${item.name} - ${item.quantity} x ${item.price.toStringAsFixed(2)} TL",
+        "$index. ${item.name} - ${item.quantity} x ${item.price.toStringAsFixed(2)} Puan",
         style: TextStyle(fontSize: 16.0),
       );
     }).toList(),
@@ -98,7 +98,7 @@ class SuccessPage extends StatelessWidget {
       children: [
         Text("Toplam:", style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
         Text(
-          "${this.carItem.fold<double>(0, (sum, item) => sum + (item.quantity * item.price)).toStringAsFixed(2)} TL",
+          "${this.carItem.fold<double>(0, (sum, item) => sum + (item.quantity * item.price)).toStringAsFixed(2)} Puan",
           style: TextStyle(fontSize: 16.0),
         ),
       ],

@@ -191,7 +191,7 @@ if (route != null && route.settings.arguments != null) {
                             style: TextStyle(fontSize: 18.0),
                           ),
                           Text(
-                            '\$ ${product.price}',
+                            '${product.price} Puan',
                             style: TextStyle(fontSize: 18.0),
                           ),
                         ],

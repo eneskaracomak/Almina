@@ -32,96 +32,101 @@ class _AppState extends State<App> {
   void dispose() {
     _resetTimer?.cancel();
     super.dispose();
-  }void _handleCheckIn() async {
-  if (!_isCheckedIn) {
-    // Check-in yapılmamışsa, popup göster
-    bool? isConfirmed = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Check-in Yapıyorsunuz"),
-        content: Text("Kafede olduğunuza dair check-in yapıyorsunuz. Onaylıyor musunuz?"),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
-            child: Text("Hayır"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(true);
-            },
-            child: Text("Evet"),
-          ),
-        ],
-      ),
+  }
+  void _handleCheckIn() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? phone = prefs.getString('userPhone');
+
+  if (phone == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Kullanıcı bilgisi bulunamadı.")),
     );
+    return;
+  }
 
-    if (isConfirmed == true) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? phone = prefs.getString('userPhone');
+  DateTime now = DateTime.now();
+  String currentDate = "${now.year}-${now.month}-${now.day}";
+  String? lastCheckInTimeString = prefs.getString('lastCheckInTime');
+  DateTime? lastCheckInTime =
+      lastCheckInTimeString != null ? DateTime.parse(lastCheckInTimeString) : null;
 
-      if (phone != null) {
-        // Firebase'den kullanıcının daha önce yaptığı check-in verilerini kontrol et
-        final checkInRef = _database.child("checkedInUsers");
-        final checkInSnapshot = await checkInRef.get();
-
-        bool isSameDayCheckIn = false;
-        if (checkInSnapshot.exists) {
-          final checkInData = checkInSnapshot.value as Map;
-          checkInData.forEach((key, value) {
-            if (value['userId'] == phone) {
-              DateTime checkInTime = DateTime.parse(value['timestamp']);
-              DateTime now = DateTime.now();
-
-              if (checkInTime.year == now.year && checkInTime.month == now.month && checkInTime.day == now.day) {
-                isSameDayCheckIn = true;
-              }
-            }
-          });
-        }
-
-        // Check-in kaydını ekle
-        await _database.child("checkedInUsers").push().set({
-          'userId': phone,
-          'timestamp': DateTime.now().toString(),
-        });
-
-        // Eğer gün içinde daha önce check-in yapılmamışsa checkIn puanını artır
-        if (!isSameDayCheckIn) {
-          final userRef = _database.child("users").orderByChild("phone").equalTo(phone);
-          final userSnapshot = await userRef.get();
-
-          if (userSnapshot.exists) {
-            final userData = userSnapshot.value as Map;
-            final userKey = userData.keys.first;
-            final currentCheckIn = userData[userKey]['checkIn'] ?? 0;
-
-            await _database.child("users/$userKey").update({
-              'checkIn': currentCheckIn + 1,
-            });
-          }
-        }
-
-        setState(() {
-          _isCheckedIn = true;
-          _buttonText = "Buradakiler";
-        });
-      } else {
-        // Eğer kullanıcı bilgisi bulunamazsa, hata mesajı göster
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Kullanıcı bilgisi bulunamadı.")),
-        );
-      }
-    }
-  } else {
-    // Eğer check-in yapılmışsa, "Buradakiler" sayfasına yönlendir
+  if (_isCheckedIn) {
+    // Eğer check-in yapılmışsa "Buradakiler" sayfasına yönlendir
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CheckedInUsersPage()),
     );
+    return;
+  }
+
+  if (lastCheckInTime != null &&
+      lastCheckInTime.difference(now).inHours < 1 &&
+      lastCheckInTime.year == now.year &&
+      lastCheckInTime.month == now.month &&
+      lastCheckInTime.day == now.day) {
+    // Eğer aynı gün ve 1 saat içerisinde check-in yapılmışsa
+    setState(() {
+      _isCheckedIn = true;
+      _buttonText = "Buradakiler";
+    });
+    return;
+  }
+
+  // Yeni bir check-in işlemi
+  bool? isConfirmed = await showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text("Check-in Yapıyorsunuz"),
+      content:
+          Text("Kafede olduğunuza dair check-in yapıyorsunuz. Onaylıyor musunuz?"),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(false);
+          },
+          child: Text("Hayır"),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(true);
+          },
+          child: Text("Evet"),
+        ),
+      ],
+    ),
+  );
+
+  if (isConfirmed == true) {
+    // Firebase işlemleri
+    final checkInRef = _database.child("checkedInUsers");
+    await checkInRef.push().set({
+      'userId': phone,
+      'timestamp': now.toString(),
+    });
+
+    final userRef = _database.child("users").orderByChild("phone").equalTo(phone);
+    final userSnapshot = await userRef.get();
+
+    if (userSnapshot.exists) {
+      final userData = userSnapshot.value as Map;
+      final userKey = userData.keys.first;
+      final currentCheckIn = userData[userKey]['checkIn'] ?? 0;
+
+      await _database.child("users/$userKey").update({
+        'checkIn': currentCheckIn + 1,
+      });
+    }
+
+    // Check-in bilgilerini SharedPreferences'e kaydet
+    await prefs.setString('lastCheckInTime', now.toIso8601String());
+
+    setState(() {
+      _isCheckedIn = true;
+      _buttonText = "Buradakiler";
+    });
   }
 }
+
 
 
 

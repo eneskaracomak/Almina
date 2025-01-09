@@ -339,9 +339,21 @@ ScaffoldMessenger.of(context).showSnackBar(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
               child: ElevatedButton(
                 onPressed: () async {
-                  // SharedPreferences'ten veri silme
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                  await prefs.clear(); // Tüm veriyi temizler
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+
+// Sıfırlanmayacak anahtarları belirleyin
+List<String> excludedKeys = ['lastSpinDate','lastCheckInTime'];
+
+// Tüm anahtarları listeleyin
+Set<String> allKeys = prefs.getKeys();
+
+// Sıfırlanacak anahtarları kaldırın
+for (String key in allKeys) {
+  if (!excludedKeys.contains(key)) {
+    prefs.remove(key);
+  }
+}
+
 
                   // Login sayfasına yönlendirme
                   Navigator.pushAndRemoveUntil(

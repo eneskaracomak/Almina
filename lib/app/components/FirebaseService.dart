@@ -177,6 +177,19 @@ class FirebaseService {
       return [];
     }
   }
+Future<void> addReservation(Reservation reservation) async {
+  final DatabaseReference databaseReference =
+      FirebaseDatabase.instance.ref().child('Reservations');
+
+  try {
+    // Reservation verisini Firebase Realtime Database'e ekliyoruz
+    final newReservationRef = databaseReference.push(); // Yeni bir id oluşturur
+    await newReservationRef.set(reservation.toJson()); // Veriyi ekler
+    print('Rezervasyon başarıyla eklendi!');
+  } catch (e) {
+    print('Rezervasyon eklenirken bir hata oluştu: $e');
+  }
+}
 
   Future<List<User>> getWinnersFromQuizUsers() async {
     try {
@@ -1087,5 +1100,33 @@ class Setting {
       'isAdBanner1': isAdBanner1,
       'isAdBanner2': isAdBanner2,
     };
+  }
+}
+class Reservation {
+  String? type; // Tür
+  String? phone; // Telefon
+  int? personCount; // Kişi Sayısı
+  String? userId; // Kullanıcı ID
+
+  Reservation({this.type, this.phone, this.personCount, this.userId});
+
+  // JSON'a dönüştürme metodu
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'phone': phone,
+      'personCount': personCount,
+      'userId': userId,
+    };
+  }
+
+  // JSON'dan Reservation nesnesine dönüştürme metodu
+  factory Reservation.fromJson(Map<String, dynamic> json) {
+    return Reservation(
+      type: json['type'],
+      phone: json['phone'],
+      personCount: json['personCount'],
+      userId: json['userId'],
+    );
   }
 }

@@ -705,8 +705,12 @@ class HediyeBulutu extends StatelessWidget {
     );
   }
 }
-
 class EventsPlaning extends StatelessWidget {
+  FirebaseService service = FirebaseService();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController personCountController = TextEditingController();
+  String? selectedEventType; // Dropdown için seçilen tür
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -753,10 +757,9 @@ class EventsPlaning extends StatelessWidget {
         ),
       ),
       onTap: () {
-        // Popup açma
         showModalBottomSheet(
           context: context,
-          isScrollControlled: true, // Scroll özelliği ekliyoruz
+          isScrollControlled: true,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(20),
@@ -767,7 +770,6 @@ class EventsPlaning extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.all(20.0),
               child: SingleChildScrollView(
-                // Scrollable hale getirdik
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -806,11 +808,12 @@ class EventsPlaning extends StatelessWidget {
                         ),
                       ],
                       onChanged: (String? newValue) {
-                        // Seçilen etkinlik türünü işle
+                        selectedEventType = newValue; // Tür seçimi
                       },
                     ),
                     SizedBox(height: 15),
                     TextField(
+                      controller: phoneController, // Telefon numarası
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         labelText: "Telefon Numarası",
@@ -820,6 +823,7 @@ class EventsPlaning extends StatelessWidget {
                     ),
                     SizedBox(height: 15),
                     TextField(
+                      controller: personCountController, // Kişi sayısı
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: "Kişi Sayısı",
@@ -829,9 +833,69 @@ class EventsPlaning extends StatelessWidget {
                     ),
                     SizedBox(height: 25),
                     ElevatedButton(
-                      onPressed: () {
-                        // Rezervasyon işlemi yapılabilir
-                        Navigator.pop(context);
+                      onPressed: () async {
+                        SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+
+                        String? userId = prefs.getString('userPhone');
+                       if (selectedEventType != null &&
+    phoneController.text.isNotEmpty &&
+    personCountController.text.isNotEmpty) {
+  // Firebase'e rezervasyon gönder
+  await service.addReservation(Reservation(
+    type: selectedEventType,
+    phone: phoneController.text,
+    personCount: int.tryParse(personCountController.text),
+    userId: userId,
+  ));
+
+  // SnackBar ile başarı mesajı göster
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.white),
+          SizedBox(width: 10),
+          Text(
+            "Rezervasyon başarıyla oluşturuldu!",
+            style: TextStyle(fontSize: 16),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.green,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      duration: Duration(seconds: 3),
+    ),
+  );
+
+  Navigator.pop(context); // Popup'ı kapat
+} else {
+  // Eksik alanlar için uyarı ver
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          Icon(Icons.warning, color: Colors.white),
+          SizedBox(width: 10),
+          Text(
+            "Lütfen tüm alanları doldurun!",
+            style: TextStyle(fontSize: 16),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.red,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      duration: Duration(seconds: 3),
+    ),
+  );
+}
+
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
@@ -840,9 +904,12 @@ class EventsPlaning extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      child: Text(
-                        "Rezervasyon Oluştur",
-                        style: TextStyle(fontSize: 16.0, color: Colors.white),
+                      child: Padding(
+                        padding: EdgeInsets.all(10),
+                        child: Text(
+                          "Rezervasyon Oluştur",
+                          style: TextStyle(fontSize: 16.0, color: Colors.white),
+                        ),
                       ),
                     ),
                   ],
@@ -855,6 +922,7 @@ class EventsPlaning extends StatelessWidget {
     );
   }
 }
+
 
 class BenimMasamBanner extends StatefulWidget {
   var tableInfo;
