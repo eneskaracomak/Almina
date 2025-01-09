@@ -111,7 +111,7 @@ void getNotifications() async {
         fontSize: 24.0, // Yazı büyüklüğü
         fontWeight: FontWeight.bold, // Kalın yazı tipi
         color: Color(0xFFB21F29), // Hex renk kodu
-        fontFamily: 'Cursive', // Daha dekoratif bir font kullanabilirsiniz
+        fontFamily: 'Allura', // Daha dekoratif bir font kullanabilirsiniz
       ),
     ),
 Stack(

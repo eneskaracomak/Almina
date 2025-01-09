@@ -86,3 +86,6 @@ flutter:
     - family: Cera Pro
       fonts:
         - asset: fonts/Cera-Pro.otf
+    - family: Allura
+      fonts:
+        - asset: fonts/Allura-Regular.ttf
