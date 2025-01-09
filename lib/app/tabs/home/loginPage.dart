@@ -18,13 +18,11 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  
-final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   Future<dynamic> checkUserExists(String phone, String password) async {
     try {
-
       final databaseReference = FirebaseDatabase.instance.ref("users");
 
       final snapshot = await databaseReference.get();
@@ -64,22 +62,24 @@ final TextEditingController _phoneController = TextEditingController();
       SharedPreferences prefs = await SharedPreferences.getInstance();
       FirebaseService service = new FirebaseService();
       await prefs.setString('userPhone', phone); // Kullanıcı bilgisi saklanır
-      await prefs.setString('isGarson', userExists["isGarson"].toString()); // Kullanıcı bilgisi saklanır
-      await prefs.setString('isAdmin', userExists["isAdmin"].toString()); // Kullanıcı bilgisi saklanır
+      await prefs.setString('isGarson',
+          userExists["isGarson"].toString()); // Kullanıcı bilgisi saklanır
+      await prefs.setString('isAdmin',
+          userExists["isAdmin"].toString()); // Kullanıcı bilgisi saklanır
       var detail = await service.getUserDataByPhone(phone);
       print("Enes");
       print(detail);
       if (detail!.isGarson) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => AppGarson()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => App()),
-          );
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AppGarson()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => App()),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Telefon numarası veya şire hatalı!")),
@@ -96,53 +96,56 @@ final TextEditingController _phoneController = TextEditingController();
         children: <Widget>[
           Text(
             title,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15,color: Colors.white),
+            style: TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
           ),
           SizedBox(
             height: 10,
           ),
           TextField(
-  controller: controller,
-  obscureText: isPassword,
-  keyboardType: isPassword ? TextInputType.text : TextInputType.phone,
-  inputFormatters: isPassword
-      ? null
-      : [
-          FilteringTextInputFormatter.digitsOnly, // Sadece rakamlara izin ver
-        ],
-  decoration: InputDecoration(
-    border: InputBorder.none,
-    fillColor: Color(0xfff3f3f4),
-    filled: true,
-  ),
-),
+            controller: controller,
+            obscureText: isPassword,
+            keyboardType: isPassword ? TextInputType.text : TextInputType.phone,
+            inputFormatters: isPassword
+                ? null
+                : [
+                    FilteringTextInputFormatter
+                        .digitsOnly, // Sadece rakamlara izin ver
+                  ],
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              fillColor: Color(0xfff3f3f4),
+              filled: true,
+            ),
+          ),
         ],
       ),
     );
   }
 
-
   Widget _submitButton() {
     return InkWell(
-      onTap: () {
-       _login();
-      },
-      child:Container(
-      width: MediaQuery.of(context).size.width,
-      padding: EdgeInsets.symmetric(vertical: 15),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(5)),
-         
-          gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [Color(0xfffbb448), Color.fromARGB(255, 175, 58, 29)])),
-      child: Text(
-        'Giriş Yap',
-        style: TextStyle(fontSize: 20, color: Colors.white),
-      ),
-    ));
+        onTap: () {
+          _login();
+        },
+        child: Container(
+          width: MediaQuery.of(context).size.width,
+          padding: EdgeInsets.symmetric(vertical: 15),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(5)),
+              gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color(0xfffbb448),
+                    Color.fromARGB(255, 175, 58, 29)
+                  ])),
+          child: Text(
+            'Giriş Yap',
+            style: TextStyle(fontSize: 20, color: Colors.white),
+          ),
+        ));
   }
 
   Widget _createAccountLabel() {
@@ -186,20 +189,23 @@ final TextEditingController _phoneController = TextEditingController();
           style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w700,
-              color: Color.fromARGB(255, 255, 255, 255)
-          ),
+              color: Color.fromARGB(255, 255, 255, 255)),
           children: [
             TextSpan(
               text: 'mi',
-              style: TextStyle(color: const Color.fromARGB(255, 255, 255, 255), fontSize: 30),
+              style: TextStyle(
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  fontSize: 30),
             ),
             TextSpan(
               text: 'na',
-              style: TextStyle(color: Color.fromARGB(255, 255, 255, 255), fontSize: 30),
+              style: TextStyle(
+                  color: Color.fromARGB(255, 255, 255, 255), fontSize: 30),
             ),
             TextSpan(
               text: '\nCafe Restaurant',
-              style: TextStyle(color: Color.fromARGB(255, 255, 253, 252), fontSize: 30),
+              style: TextStyle(
+                  color: Color.fromARGB(255, 255, 253, 252), fontSize: 30),
             ),
           ]),
     );
@@ -208,8 +214,8 @@ final TextEditingController _phoneController = TextEditingController();
   Widget _emailPasswordWidget() {
     return Column(
       children: <Widget>[
-        _entryField("Telefon Numarası",_phoneController),
-        _entryField("Parola",_passwordController, isPassword: true),
+        _entryField("Telefon Numarası", _phoneController),
+        _entryField("Parola", _passwordController, isPassword: true),
       ],
     );
   }
@@ -219,11 +225,11 @@ final TextEditingController _phoneController = TextEditingController();
     final height = MediaQuery.of(context).size.height;
     return Scaffold(
         body: Container(
-              decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('images/back.jgp'),
-              fit: BoxFit.cover, // Resmin nasıl yerleşeceğini belirtir
-            )),
+      decoration: BoxDecoration(
+          image: DecorationImage(
+        image: AssetImage('images/back.jpg'),
+        fit: BoxFit.cover, // Resmin nasıl yerleşeceğini belirtir
+      )),
       height: height,
       child: Stack(
         children: <Widget>[
@@ -243,7 +249,7 @@ final TextEditingController _phoneController = TextEditingController();
                   SizedBox(height: 50),
                   _emailPasswordWidget(),
                   SizedBox(height: 20),
-                  _submitButton(),                  
+                  _submitButton(),
                   _createAccountLabel(),
                 ],
               ),

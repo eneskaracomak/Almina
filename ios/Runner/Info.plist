@@ -11,7 +11,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>food_bit_app</string>
+	<string>Almina Cafe</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -63,6 +63,6 @@
     </dict>
     <!-- Kamera Kullanımı Açıklaması -->
     <key>NSCameraUsageDescription</key>
-    <string>Uygulama, kamera erişimi gerektiriyor. Bu özellik, fotoğraf çekmek ve tarama yapmak için kullanılacaktır.</string>
+    <string>Almina Cafe uygulaması, kamera erişimi gerektiriyor. Bu özellik, fotoğraf çekmek ve tarama yapmak için kullanılacaktır.</string>
 </dict>
 </plist>

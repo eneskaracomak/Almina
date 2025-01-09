@@ -100,17 +100,7 @@ class FirebaseService {
 
     if (snapshot.exists) {
       Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
-      data.forEach((key, value) {
-        if ((value['checkIn'] ?? 0) != 0) {
-          leaderboardData.add({
-            'name': value['name'] ?? 'Bilinmeyen',
-            'image': value['image'] ?? 'https://via.placeholder.com/150',
-            'score': value['score'] ?? 0,
-            'cafeVisits':
-                value['checkIn'] ?? 0, // checkIn kolonunu buraya ekliyoruz
-          });
-        }
-      });
+
       data.forEach((key, value) {
         if ((value['checkIn'] ?? 0) != 0) {
           leaderboardData.add({
@@ -475,17 +465,6 @@ class FirebaseService {
         // Kullanıcıları score'a göre sıralıyoruz
         users.sort((a, b) => b.point.compareTo(a.point));
 
-        // leaderboardData'ya ekleme
-        for (int i = 0; i < users.length; i++) {
-          if (users[i].point > 0) {
-            leaderboardData.add({
-              'rank': i + 1,
-              'name': users[i].name,
-              'score': users[i].point,
-              'image': 'https://via.placeholder.com/150',
-            });
-          }
-        }
         // leaderboardData'ya ekleme
         for (int i = 0; i < users.length; i++) {
           if (users[i].point > 0) {
