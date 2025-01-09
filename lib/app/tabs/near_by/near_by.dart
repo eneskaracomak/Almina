@@ -118,6 +118,7 @@ class _NearByState extends State<NearBy> {
               children: <Widget>[
                 CircleAvatar(
                   radius: 28.0,
+                  backgroundColor: Colors.white,
                   backgroundImage: NetworkImage(data['image']),
                 ),
                 SizedBox(width: 12.0),

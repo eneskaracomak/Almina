@@ -116,7 +116,7 @@ class _ExamplePageState extends State<ExamplePage> {
                             var lastSpinDate = await prefs.getString('lastSpinDate');
                             var currentDate = DateTime.now().toString().split(' ')[0]; // sadece tarih kısmı
                             
-                            if (lastSpinDate != currentDate) {
+                            if (lastSpinDate == currentDate) {
                               // Eğer kullanıcı zaten o gün çevirmişse, uyarı göster
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(

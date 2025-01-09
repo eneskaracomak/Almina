@@ -173,11 +173,12 @@ class _CartState extends State<Cart> with TickerProviderStateMixin {
             child: Row(
               children: <Widget>[
                 Container(
+                  margin: EdgeInsets.only(left: 10),
                   height: 100,
                   width: 100,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: AssetImage(food.image),
+                      image: NetworkImage(food.image),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -203,7 +204,7 @@ class _CartState extends State<Cart> with TickerProviderStateMixin {
                             ),
                           ],
                         ),
-                        Text('\$${food.price}'),
+                        Text(food.price.toString() + " Puan"),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[

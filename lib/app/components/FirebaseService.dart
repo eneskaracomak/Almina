@@ -96,7 +96,7 @@ Future<List<Map<String, dynamic>>> getLeaderboardDataLocation() async {
   if ((value['checkIn'] ?? 0) != 0) {
     leaderboardData.add({
       'name': value['name'] ?? 'Bilinmeyen',
-      'image': value['image'] ?? 'https://via.placeholder.com/150',
+      'image': value['profilePic'] ?? 'https://cdn-icons-png.flaticon.com/512/7107/7107994.png',
       'score': value['score'] ?? 0,
       'cafeVisits': value['checkIn'] ?? 0, // checkIn kolonunu buraya ekliyoruz
     });
@@ -437,8 +437,8 @@ Future<List<Map<String, dynamic>>> getLeaderboardData() async {
           'rank': i + 1,
           'name': users[i].name,
           'score': users[i].point,
-          'image': 'https://via.placeholder.com/150',
-        });}
+          'image': users[i].profilePic == '' ? 'https://cdn-icons-png.flaticon.com/512/7107/7107994.png' : users[i].profilePic,
+          });}
       }
 
       print("Leaderboard data successfully fetched.");

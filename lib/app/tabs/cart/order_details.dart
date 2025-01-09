@@ -66,7 +66,7 @@ double calculateTotalPoints(List<CartItem> cartItems) {
                       margin: EdgeInsets.symmetric(vertical: 5.0),
                       child: ListTile(
                         contentPadding: EdgeInsets.all(10.0),
-                        leading: Image.asset(
+                        leading: Image.network(
                           item.image, // Ürün resmini sol tarafa yerleştiriyoruz
                           width: 50.0,
                           height: 50.0,
