@@ -10,7 +10,7 @@ description: A new Flutter project.
 # Read more about Android versioning at https://developer.android.com/studio/publish/versioning
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+#https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 version: 1.0.0+3
 
 environment:
@@ -28,19 +28,15 @@ dependencies:
   qr_code_scanner_plus: ^2.0.6
   firebase_core: ^2.15.0
   firebase_messaging: ^14.5.0
+  audioplayers: ^6.1.0
   shared_preferences: ^2.3.3
   firebase_database: ^10.0.14
   cloud_firestore: ^4.17.5
-  audioplayers: ^6.1.0
   image_picker: ^1.1.2
-
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter.
 flutter:

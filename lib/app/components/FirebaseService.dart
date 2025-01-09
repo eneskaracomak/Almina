@@ -2,68 +2,73 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class FirebaseService {
-  final DatabaseReference _db = FirebaseDatabase.instance.ref(); // Realtime Database referansı
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance; // Firestore referansı
-   final DatabaseReference _notificationRef = FirebaseDatabase.instance.ref().child('Notifications');
+  final DatabaseReference _db =
+      FirebaseDatabase.instance.ref(); // Realtime Database referansı
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance; // Firestore referansı
+  final DatabaseReference _notificationRef =
+      FirebaseDatabase.instance.ref().child('Notifications');
 
-Future<void> updateNotification(String description, DateTime dateTime) async {
-  try {
-    // Tüm bildirimleri al
-    final snapshot = await _notificationRef.get();
-    if (snapshot.exists) {
-      // Her bir bildirimi döngüyle kontrol et
-      for (var child in snapshot.children) {
-        final Map<dynamic, dynamic>? value = child.value as Map<dynamic, dynamic>?;
-        if (value != null) {
-          // Eşleşen kayıt kontrolü
-          if (value['Description'] == description &&
-              DateTime.parse(value['DateTime']) == dateTime) {
-            // isActive değerini false yap
-            await _notificationRef.child(child.key!).update({
-              'IsActive': false,
-            });
-            print("Bildirim güncellendi: ${child.key!}");
-            return; // İşlem tamamlandığında çık
+  Future<void> updateNotification(String description, DateTime dateTime) async {
+    try {
+      // Tüm bildirimleri al
+      final snapshot = await _notificationRef.get();
+      if (snapshot.exists) {
+        // Her bir bildirimi döngüyle kontrol et
+        for (var child in snapshot.children) {
+          final Map<dynamic, dynamic>? value =
+              child.value as Map<dynamic, dynamic>?;
+          if (value != null) {
+            // Eşleşen kayıt kontrolü
+            if (value['Description'] == description &&
+                DateTime.parse(value['DateTime']) == dateTime) {
+              // isActive değerini false yap
+              await _notificationRef.child(child.key!).update({
+                'IsActive': false,
+              });
+              print("Bildirim güncellendi: ${child.key!}");
+              return; // İşlem tamamlandığında çık
+            }
           }
         }
+        print("Eşleşen bir kayıt bulunamadı.");
+      } else {
+        print("Bildirimler bulunamadı.");
       }
-      print("Eşleşen bir kayıt bulunamadı.");
-    } else {
-      print("Bildirimler bulunamadı.");
+    } catch (e) {
+      print("Güncelleme sırasında hata oluştu: $e");
     }
-  } catch (e) {
-    print("Güncelleme sırasında hata oluştu: $e");
   }
-}
-Future<List<NotificationModel>> fetchActiveNotifications() async {
-  try {
-    final snapshot = await _notificationRef.get();
-    if (snapshot.exists) {
-      final notifications = <NotificationModel>[];
-      print(snapshot);
-      for (var child in snapshot.children) {
-        final data = child.value as Map<dynamic, dynamic>;
-        // Sadece isActive = true olanları ekle
-        if (data['IsActive'] == true) {
-          notifications.add(
-            NotificationModel.fromJson(
-              child.key!,
-              data,
-            ),
-          );
+
+  Future<List<NotificationModel>> fetchActiveNotifications() async {
+    try {
+      final snapshot = await _notificationRef.get();
+      if (snapshot.exists) {
+        final notifications = <NotificationModel>[];
+        print(snapshot);
+        for (var child in snapshot.children) {
+          final data = child.value as Map<dynamic, dynamic>;
+          // Sadece isActive = true olanları ekle
+          if (data['IsActive'] == true) {
+            notifications.add(
+              NotificationModel.fromJson(
+                child.key!,
+                data,
+              ),
+            );
+          }
         }
+        return notifications;
       }
-      return notifications;
+      return [];
+    } catch (e) {
+      print('Error while fetching active notifications: $e');
+      return [];
     }
-    return [];
-  } catch (e) {
-    print('Error while fetching active notifications: $e');
-    return [];
   }
-}
 
   // Firebase Realtime Database'e veri ekleme
-   Future<void> addNotification(NotificationModel notification) async {
+  Future<void> addNotification(NotificationModel notification) async {
     try {
       // Yeni bir key oluştur ve veriyi ekle
       final newNotificationRef = _notificationRef.push();
@@ -73,77 +78,96 @@ Future<List<NotificationModel>> fetchActiveNotifications() async {
       print('Error while adding notification: $e');
     }
   }
-Future<void> addUserOrder(UserOrder userOrder) async {
-  final DatabaseReference databaseReference = FirebaseDatabase.instance.ref().child('UserOrder');
 
-  try {
-    // UserOrder verisini Firebase Realtime Database'e ekliyoruz
-    final newOrderRef = databaseReference.push(); // Yeni bir id oluşturur
-    await newOrderRef.set(userOrder.toJson()); // Veriyi ekler
-    print('Sipariş başarıyla eklendi!');
-  } catch (e) {
-    print('Error adding order: $e');
+  Future<void> addUserOrder(UserOrder userOrder) async {
+    final DatabaseReference databaseReference =
+        FirebaseDatabase.instance.ref().child('UserOrder');
+
+    try {
+      // UserOrder verisini Firebase Realtime Database'e ekliyoruz
+      final newOrderRef = databaseReference.push(); // Yeni bir id oluşturur
+      await newOrderRef.set(userOrder.toJson()); // Veriyi ekler
+      print('Sipariş başarıyla eklendi!');
+    } catch (e) {
+      print('Error adding order: $e');
+    }
   }
-}
-Future<List<Map<String, dynamic>>> getLeaderboardDataLocation() async {
+
+  Future<List<Map<String, dynamic>>> getLeaderboardDataLocation() async {
     List<Map<String, dynamic>> leaderboardData = [];
 
     final snapshot = await _db.child('users').get();
 
     if (snapshot.exists) {
       Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
-   data.forEach((key, value) {
-  if ((value['checkIn'] ?? 0) != 0) {
-    leaderboardData.add({
-      'name': value['name'] ?? 'Bilinmeyen',
-      'image': value['profilePic'] ?? 'https://cdn-icons-png.flaticon.com/512/7107/7107994.png',
-      'score': value['score'] ?? 0,
-      'cafeVisits': value['checkIn'] ?? 0, // checkIn kolonunu buraya ekliyoruz
-    });
-  }
-});
+      data.forEach((key, value) {
+        if ((value['checkIn'] ?? 0) != 0) {
+          leaderboardData.add({
+            'name': value['name'] ?? 'Bilinmeyen',
+            'image': value['image'] ?? 'https://via.placeholder.com/150',
+            'score': value['score'] ?? 0,
+            'cafeVisits':
+                value['checkIn'] ?? 0, // checkIn kolonunu buraya ekliyoruz
+          });
+        }
+      });
+      data.forEach((key, value) {
+        if ((value['checkIn'] ?? 0) != 0) {
+          leaderboardData.add({
+            'name': value['name'] ?? 'Bilinmeyen',
+            'image': value['profilePic'] ??
+                'https://cdn-icons-png.flaticon.com/512/7107/7107994.png',
+            'score': value['score'] ?? 0,
+            'cafeVisits':
+                value['checkIn'] ?? 0, // checkIn kolonunu buraya ekliyoruz
+          });
+        }
+      });
 
 // Sıralama işlemi (cafeVisits değerine göre azalan)
-leaderboardData.sort((a, b) => (b['cafeVisits'] ?? 0).compareTo(a['cafeVisits'] ?? 0));
+      leaderboardData.sort(
+          (a, b) => (b['cafeVisits'] ?? 0).compareTo(a['cafeVisits'] ?? 0));
 
 // Rank atama
-for (int i = 0; i < leaderboardData.length; i++) {
-  leaderboardData[i]['rank'] = i + 1; // Rank 1'den başlar
-}
-
+      for (int i = 0; i < leaderboardData.length; i++) {
+        leaderboardData[i]['rank'] = i + 1; // Rank 1'den başlar
+      }
 
       // Ziyaret sıralaması için sırala
-      leaderboardData.sort((a, b) => (b['cafeVisits'] ?? 0).compareTo(a['cafeVisits'] ?? 0));
+      leaderboardData.sort(
+          (a, b) => (b['cafeVisits'] ?? 0).compareTo(a['cafeVisits'] ?? 0));
     }
 
     return leaderboardData;
   }
 
-  Future<void> addUserNotification(String userPhone, String title, String message) async {
-  final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+  Future<void> addUserNotification(
+      String userPhone, String title, String message) async {
+    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
 
-  // Yeni bildirim verisini hazırlayın
-  final notificationData = {
-    'userPhone': userPhone,
-    'title': title,
-    'message': message,
-    'timestamp': DateTime.now().millisecondsSinceEpoch.toString(), // Zaman damgası ekleyebilirsiniz
-  };
+    // Yeni bildirim verisini hazırlayın
+    final notificationData = {
+      'userPhone': userPhone,
+      'title': title,
+      'message': message,
+      'timestamp': DateTime.now()
+          .millisecondsSinceEpoch
+          .toString(), // Zaman damgası ekleyebilirsiniz
+    };
 
-  try {
-    // Firebase veritabanında userNotifications altına yeni bir bildirim ekleyin
-    await dbRef.child('userNotifications').push().set(notificationData);
-    print("Bildirim başarıyla eklendi.");
-  } catch (error) {
-    print("Bildirim eklerken hata oluştu: $error");
-  }
-}
-
-Future<List<Map<String, dynamic>>> getQuiz() async {
     try {
-         DataSnapshot snapshot = await FirebaseDatabase.instance
-        .ref("questions")
-        .get();
+      // Firebase veritabanında userNotifications altına yeni bir bildirim ekleyin
+      await dbRef.child('userNotifications').push().set(notificationData);
+      print("Bildirim başarıyla eklendi.");
+    } catch (error) {
+      print("Bildirim eklerken hata oluştu: $error");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getQuiz() async {
+    try {
+      DataSnapshot snapshot =
+          await FirebaseDatabase.instance.ref("questions").get();
 
       // Veriler boş değilse, kullanıcıları liste olarak döndürüyoruz
       if (snapshot.exists) {
@@ -164,303 +188,335 @@ Future<List<Map<String, dynamic>>> getQuiz() async {
     }
   }
 
- Future<List<User>> getWinnersFromQuizUsers() async {
-  try {
-    // 'QuizUsers' tablosundaki verileri alıyoruz
-    DataSnapshot snapshot = await FirebaseDatabase.instance
-        .ref("QuizUsers")
-        .orderByChild('isTrue')
-        .equalTo(true)
-        .get();
+  Future<List<User>> getWinnersFromQuizUsers() async {
+    try {
+      // 'QuizUsers' tablosundaki verileri alıyoruz
+      DataSnapshot snapshot = await FirebaseDatabase.instance
+          .ref("QuizUsers")
+          .orderByChild('isTrue')
+          .equalTo(true)
+          .get();
 
-    List<User> winners = [];
+      List<User> winners = [];
 
-    // 'isTrue' değeri true olan kayıtları döngüyle alıyoruz
-    if (snapshot.exists) {
-      Map<dynamic, dynamic> values = snapshot.value as Map<dynamic, dynamic>;
+      // 'isTrue' değeri true olan kayıtları döngüyle alıyoruz
+      if (snapshot.exists) {
+        Map<dynamic, dynamic> values = snapshot.value as Map<dynamic, dynamic>;
 
-      for (var key in values.keys) {
-        // Kazanan kişinin telefon numarasını alıyoruz
-        String userPhone = values[key]['userPhone'];
+        for (var key in values.keys) {
+          // Kazanan kişinin telefon numarasını alıyoruz
+          String userPhone = values[key]['userPhone'];
 
-        // Kullanıcıyı 'users' tablosundan buluyoruz
-        DataSnapshot userSnapshot = await FirebaseDatabase.instance
-            .ref('users')
-            .orderByChild('phone')
-            .equalTo(userPhone)
-            .get();
+          // Kullanıcıyı 'users' tablosundan buluyoruz
+          DataSnapshot userSnapshot = await FirebaseDatabase.instance
+              .ref('users')
+              .orderByChild('phone')
+              .equalTo(userPhone)
+              .get();
 
-        if (userSnapshot.exists) {
-          Map<dynamic, dynamic> userData = userSnapshot.value as Map<dynamic, dynamic>;
-          for (var userKey in userData.keys) {
-            // Kullanıcıdan gerekli bilgileri alıyoruz (örneğin name, phone, etc.)
-            String name = userData[userKey]['name'];
-            String phone = userData[userKey]['phone'];
+          if (userSnapshot.exists) {
+            Map<dynamic, dynamic> userData =
+                userSnapshot.value as Map<dynamic, dynamic>;
+            for (var userKey in userData.keys) {
+              // Kullanıcıdan gerekli bilgileri alıyoruz (örneğin name, phone, etc.)
+              String name = userData[userKey]['name'];
+              String phone = userData[userKey]['phone'];
 
-            // Kullanıcı objesini oluşturuyoruz ve listeye ekliyoruz
-            winners.add(User(name: name, phone: phone,isActive: true,isAdmin:false,isGarson: false,isNotification: false,password: "",point: 0,profilePic: ""));
+              // Kullanıcı objesini oluşturuyoruz ve listeye ekliyoruz
+              winners.add(User(
+                  name: name,
+                  phone: phone,
+                  isActive: true,
+                  isAdmin: false,
+                  isGarson: false,
+                  isNotification: false,
+                  password: "",
+                  point: 0,
+                  profilePic: ""));
+            }
           }
         }
       }
-    }
 
-    return winners;
-  } catch (e) {
-    print("Hata: $e");
-    return [];
-  }
-}
-
-
-Future<void> checkAndUpdateUser(String userPhone) async {
-  // Firebase Realtime Database referansı
-  final databaseReference = FirebaseDatabase.instance.ref("QuizUsers");
-
-  // Şu anki tarih
-  DateTime now = DateTime.now();
-  String formattedDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-
-  try {
-    // Tüm kayıtları al ve kontrol et
-    DataSnapshot snapshot = await databaseReference.get();
-
-    String? existingUserKey; // Kullanıcının Firebase key'i
-    bool isTrue = true; // Mevcut kullanıcının isTrue durumu
-
-    if (snapshot.exists) {
-      Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
-      data.forEach((key, value) {
-        // Telefon numarası ve tarih eşleşmesini kontrol et
-        if (value['userPhone'] == userPhone && value['dateTime'].toString().startsWith(formattedDate)) {
-          existingUserKey = key;
-          isTrue = value['isTrue'];
-        }
-      });
-    }
-
-    if (existingUserKey != null) {
-      // Kullanıcı zaten kayıtlı, isTrue alanını false yap
-      if (isTrue) {
-        await databaseReference.child(existingUserKey!).update({'isTrue': false});
-        print("Kullanıcının isTrue alanı false olarak güncellendi.");
-      } else {
-        print("Kullanıcının isTrue alanı zaten false.");
-      }
-    } else {
-      // Kullanıcı mevcut değil, yeni kayıt oluştur
-      Map<String, dynamic> userData = {
-        "userPhone": userPhone,
-        "dateTime": "${formattedDate} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}",
-        "isTrue": true,
-      };
-
-      await databaseReference.push().set(userData);
-      print("Yeni kullanıcı başarıyla kaydedildi.");
-    }
-  } catch (e) {
-    print("Kullanıcı kontrol edilirken veya kaydedilirken hata oluştu: $e");
-  }
-}
-
-Future<List<QuizUser>> getUserQuizDataForToday(String userPhone) async {
-  // Firebase Realtime Database referansı
-  final databaseReference = FirebaseDatabase.instance.ref("QuizUsers");
-
-  // Şu anki tarih ve saati almak için
-  DateTime now = DateTime.now();
-  String formattedDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-
-  List<QuizUser> quizUsers = [];
-
-  try {
-    // Tüm kayıtları al ve kontrol et
-    DataSnapshot snapshot = await databaseReference.get();
-
-    if (snapshot.exists) {
-      // Firebase'den gelen veriyi kontrol et
-      Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
-
-      // Verileri filtrele ve QuizUser nesnelerine dönüştür
-      data.forEach((key, value) {
-        if (value['userPhone'] == userPhone && value['dateTime'].toString().startsWith(formattedDate)) {
-          quizUsers.add(QuizUser.fromMap(value));
-        }
-      });
-    } else {
-      print("Veri bulunamadı.");
-    }
-  } catch (e) {
-    print("Veri çekilirken hata oluştu: $e");
-  }
-
-  return quizUsers;
-}
-
-
-Future<int> getQuizTodayUserCount() async {
-  // Firebase Realtime Database referansı
-  final databaseReference = FirebaseDatabase.instance.ref("QuizUsers");
-
-  // Şu anki tarih (Yıl-Ay-Gün formatında)
-  DateTime now = DateTime.now();
-  String formattedDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-
-  try {
-    // Firebase'den tüm kayıtları çek
-    DataSnapshot snapshot = await databaseReference.get();
-
-    if (snapshot.exists) {
-      // Firebase'den gelen veriyi kontrol et
-      Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
-      int count = 0;
-
-      // Bugüne ait kullanıcıları say
-      data.forEach((key, value) {
-        if (value['dateTime'].toString().startsWith(formattedDate)) {
-          count++;
-        }
-      });
-
-      print("Bugünkü toplam kullanıcı sayısı: $count");
-      return count;
-    } else {
-      print("Bugün için hiçbir kayıt bulunamadı.");
-      return 0;
-    }
-  } catch (e) {
-    print("Kullanıcı sayısı alınırken hata oluştu: $e");
-    return 0;
-  }
-}
-
-Future<void> addUserToQuiz(String userPhone) async {
-  // Firebase Realtime Database referansı
-  final databaseReference = FirebaseDatabase.instance.ref("QuizUsers");
-
-  // Şu anki tarih ve saati almak için
-  DateTime now = DateTime.now();
-  String formattedDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-
-  try {
-    // Tüm kayıtları al ve kontrol et
-    DataSnapshot snapshot = await databaseReference.get();
-
-    bool alreadyRegistered = false;
-
-    if (snapshot.exists) {
-      // Firebase'den gelen veriyi kontrol et
-      Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
-      data.forEach((key, value) {
-        if (value['userPhone'] == userPhone && value['dateTime'].toString().startsWith(formattedDate)) {
-          alreadyRegistered = true;
-        }
-      });
-    }
-
-    if (!alreadyRegistered) {
-      // Kayıt verisi
-      Map<String, dynamic> userData = {
-        "userPhone": userPhone,
-        "dateTime": "${formattedDate} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}",
-        "isTrue": true,
-      };
-
-      // Yeni bir kayıt oluştur
-      await databaseReference.push().set(userData);
-      print("Kullanıcı başarıyla kaydedildi.");
-    } else {
-      print("Bu kullanıcı zaten bugün kayıt olmuş.");
-    }
-  } catch (e) {
-    print("Kullanıcı kontrol edilirken veya kaydedilirken hata oluştu: $e");
-  }
-}
-
-
-Future<List<Map<String, dynamic>>> fetchUserNotifications(String userPhone) async {
-  final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-
-  try {
-    // Veritabanından userNotifications verisini çekiyoruz
-    final DataSnapshot snapshot = await dbRef.child('userNotifications')
-        .orderByChild('userPhone')
-        .equalTo(userPhone)
-        .get();
-
-    if (snapshot.exists) {
-      // Gelen veriyi listeye dönüştür
-      final List<Map<String, dynamic>> notifications = [];
-      for (var child in snapshot.children) {
-        final Map<String, dynamic> data = Map<String, dynamic>.from(child.value as Map);
-
-        // 'isRead' true ise bu bildirimi atla
-        if (data['isRead'] != true) {
-          notifications.add(data);
-        }
-      }
-      return notifications; // Bildirimler listesi (isRead: false olanlar)
-    } else {
-      print('No notifications found for this user.');
+      return winners;
+    } catch (e) {
+      print("Hata: $e");
       return [];
     }
-  } catch (error) {
-    print('Error fetching notifications: $error');
-    return [];
   }
-}
 
-Future<List<Map<String, dynamic>>> getLeaderboardData() async {
-  List<Map<String, dynamic>> leaderboardData = [];
-  
-  try {
-    // 'users' düğümünden tüm veriyi alıyoruz
-    DatabaseEvent event = await _db.child('users').once();
-    DataSnapshot snapshot = event.snapshot;
+  Future<void> checkAndUpdateUser(String userPhone) async {
+    // Firebase Realtime Database referansı
+    final databaseReference = FirebaseDatabase.instance.ref("QuizUsers");
 
-    if (snapshot.exists) {
-      var usersMap = Map<String, dynamic>.from(snapshot.value as Map);
+    // Şu anki tarih
+    DateTime now = DateTime.now();
+    String formattedDate =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
-      // Kullanıcıları User objesine dönüştürme
-      List<User> users = [];
-      usersMap.forEach((key, value) {
-        var userData = Map<String, dynamic>.from(value);
-        users.add(User.fromMap(userData));
-      });
+    try {
+      // Tüm kayıtları al ve kontrol et
+      DataSnapshot snapshot = await databaseReference.get();
 
-      // Kullanıcıları score'a göre sıralıyoruz
-      users.sort((a, b) => b.point.compareTo(a.point));
+      String? existingUserKey; // Kullanıcının Firebase key'i
+      bool isTrue = true; // Mevcut kullanıcının isTrue durumu
 
-      // leaderboardData'ya ekleme
-      for (int i = 0; i < users.length; i++) {
-        if(users[i].point > 0){
-        leaderboardData.add({
-          'rank': i + 1,
-          'name': users[i].name,
-          'score': users[i].point,
-          'image': users[i].profilePic == '' ? 'https://cdn-icons-png.flaticon.com/512/7107/7107994.png' : users[i].profilePic,
-          });}
+      if (snapshot.exists) {
+        Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        data.forEach((key, value) {
+          // Telefon numarası ve tarih eşleşmesini kontrol et
+          if (value['userPhone'] == userPhone &&
+              value['dateTime'].toString().startsWith(formattedDate)) {
+            existingUserKey = key;
+            isTrue = value['isTrue'];
+          }
+        });
       }
 
-      print("Leaderboard data successfully fetched.");
-    } else {
-      print("No users found.");
+      if (existingUserKey != null) {
+        // Kullanıcı zaten kayıtlı, isTrue alanını false yap
+        if (isTrue) {
+          await databaseReference
+              .child(existingUserKey!)
+              .update({'isTrue': false});
+          print("Kullanıcının isTrue alanı false olarak güncellendi.");
+        } else {
+          print("Kullanıcının isTrue alanı zaten false.");
+        }
+      } else {
+        // Kullanıcı mevcut değil, yeni kayıt oluştur
+        Map<String, dynamic> userData = {
+          "userPhone": userPhone,
+          "dateTime":
+              "${formattedDate} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}",
+          "isTrue": true,
+        };
+
+        await databaseReference.push().set(userData);
+        print("Yeni kullanıcı başarıyla kaydedildi.");
+      }
+    } catch (e) {
+      print("Kullanıcı kontrol edilirken veya kaydedilirken hata oluştu: $e");
     }
-  } catch (e) {
-    print("Error occurred while fetching leaderboard data: $e");
   }
 
-  return leaderboardData;
-}
+  Future<List<QuizUser>> getUserQuizDataForToday(String userPhone) async {
+    // Firebase Realtime Database referansı
+    final databaseReference = FirebaseDatabase.instance.ref("QuizUsers");
+
+    // Şu anki tarih ve saati almak için
+    DateTime now = DateTime.now();
+    String formattedDate =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    List<QuizUser> quizUsers = [];
+
+    try {
+      // Tüm kayıtları al ve kontrol et
+      DataSnapshot snapshot = await databaseReference.get();
+
+      if (snapshot.exists) {
+        // Firebase'den gelen veriyi kontrol et
+        Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+
+        // Verileri filtrele ve QuizUser nesnelerine dönüştür
+        data.forEach((key, value) {
+          if (value['userPhone'] == userPhone &&
+              value['dateTime'].toString().startsWith(formattedDate)) {
+            quizUsers.add(QuizUser.fromMap(value));
+          }
+        });
+      } else {
+        print("Veri bulunamadı.");
+      }
+    } catch (e) {
+      print("Veri çekilirken hata oluştu: $e");
+    }
+
+    return quizUsers;
+  }
+
+  Future<int> getQuizTodayUserCount() async {
+    // Firebase Realtime Database referansı
+    final databaseReference = FirebaseDatabase.instance.ref("QuizUsers");
+
+    // Şu anki tarih (Yıl-Ay-Gün formatında)
+    DateTime now = DateTime.now();
+    String formattedDate =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    try {
+      // Firebase'den tüm kayıtları çek
+      DataSnapshot snapshot = await databaseReference.get();
+
+      if (snapshot.exists) {
+        // Firebase'den gelen veriyi kontrol et
+        Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        int count = 0;
+
+        // Bugüne ait kullanıcıları say
+        data.forEach((key, value) {
+          if (value['dateTime'].toString().startsWith(formattedDate)) {
+            count++;
+          }
+        });
+
+        print("Bugünkü toplam kullanıcı sayısı: $count");
+        return count;
+      } else {
+        print("Bugün için hiçbir kayıt bulunamadı.");
+        return 0;
+      }
+    } catch (e) {
+      print("Kullanıcı sayısı alınırken hata oluştu: $e");
+      return 0;
+    }
+  }
+
+  Future<void> addUserToQuiz(String userPhone) async {
+    // Firebase Realtime Database referansı
+    final databaseReference = FirebaseDatabase.instance.ref("QuizUsers");
+
+    // Şu anki tarih ve saati almak için
+    DateTime now = DateTime.now();
+    String formattedDate =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    try {
+      // Tüm kayıtları al ve kontrol et
+      DataSnapshot snapshot = await databaseReference.get();
+
+      bool alreadyRegistered = false;
+
+      if (snapshot.exists) {
+        // Firebase'den gelen veriyi kontrol et
+        Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
+        data.forEach((key, value) {
+          if (value['userPhone'] == userPhone &&
+              value['dateTime'].toString().startsWith(formattedDate)) {
+            alreadyRegistered = true;
+          }
+        });
+      }
+
+      if (!alreadyRegistered) {
+        // Kayıt verisi
+        Map<String, dynamic> userData = {
+          "userPhone": userPhone,
+          "dateTime":
+              "${formattedDate} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}",
+          "isTrue": true,
+        };
+
+        // Yeni bir kayıt oluştur
+        await databaseReference.push().set(userData);
+        print("Kullanıcı başarıyla kaydedildi.");
+      } else {
+        print("Bu kullanıcı zaten bugün kayıt olmuş.");
+      }
+    } catch (e) {
+      print("Kullanıcı kontrol edilirken veya kaydedilirken hata oluştu: $e");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchUserNotifications(
+      String userPhone) async {
+    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+
+    try {
+      // Veritabanından userNotifications verisini çekiyoruz
+      final DataSnapshot snapshot = await dbRef
+          .child('userNotifications')
+          .orderByChild('userPhone')
+          .equalTo(userPhone)
+          .get();
+
+      if (snapshot.exists) {
+        // Gelen veriyi listeye dönüştür
+        final List<Map<String, dynamic>> notifications = [];
+        for (var child in snapshot.children) {
+          final Map<String, dynamic> data =
+              Map<String, dynamic>.from(child.value as Map);
+
+          // 'isRead' true ise bu bildirimi atla
+          if (data['isRead'] != true) {
+            notifications.add(data);
+          }
+        }
+        return notifications; // Bildirimler listesi (isRead: false olanlar)
+      } else {
+        print('No notifications found for this user.');
+        return [];
+      }
+    } catch (error) {
+      print('Error fetching notifications: $error');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getLeaderboardData() async {
+    List<Map<String, dynamic>> leaderboardData = [];
+
+    try {
+      // 'users' düğümünden tüm veriyi alıyoruz
+      DatabaseEvent event = await _db.child('users').once();
+      DataSnapshot snapshot = event.snapshot;
+
+      if (snapshot.exists) {
+        var usersMap = Map<String, dynamic>.from(snapshot.value as Map);
+
+        // Kullanıcıları User objesine dönüştürme
+        List<User> users = [];
+        usersMap.forEach((key, value) {
+          var userData = Map<String, dynamic>.from(value);
+          users.add(User.fromMap(userData));
+        });
+
+        // Kullanıcıları score'a göre sıralıyoruz
+        users.sort((a, b) => b.point.compareTo(a.point));
+
+        // leaderboardData'ya ekleme
+        for (int i = 0; i < users.length; i++) {
+          if (users[i].point > 0) {
+            leaderboardData.add({
+              'rank': i + 1,
+              'name': users[i].name,
+              'score': users[i].point,
+              'image': 'https://via.placeholder.com/150',
+            });
+          }
+        }
+        // leaderboardData'ya ekleme
+        for (int i = 0; i < users.length; i++) {
+          if (users[i].point > 0) {
+            leaderboardData.add({
+              'rank': i + 1,
+              'name': users[i].name,
+              'score': users[i].point,
+              'image': users[i].profilePic == ''
+                  ? 'https://cdn-icons-png.flaticon.com/512/7107/7107994.png'
+                  : users[i].profilePic,
+            });
+          }
+        }
+
+        print("Leaderboard data successfully fetched.");
+      } else {
+        print("No users found.");
+      }
+    } catch (e) {
+      print("Error occurred while fetching leaderboard data: $e");
+    }
+
+    return leaderboardData;
+  }
 
   // Firebase Realtime Database'den telefon numarasına göre kullanıcı verisi çekme
   Future<User?> getUserDataByPhone(String phone) async {
     try {
       // Firebase Realtime Database'den veriyi al
-      DatabaseEvent event = await _db
-          .child("users")
-          .orderByChild('phone')
-          .equalTo(phone)
-          .once();
+      DatabaseEvent event =
+          await _db.child("users").orderByChild('phone').equalTo(phone).once();
 
       // DatabaseEvent nesnesinden DataSnapshot'a erişim
       DataSnapshot snapshot = event.snapshot;
@@ -470,8 +526,9 @@ Future<List<Map<String, dynamic>>> getLeaderboardData() async {
         var userMap = Map<String, dynamic>.from(snapshot.value as Map);
 
         // Anahtarı al ve alt veri kısmına eriş
-        var userData = userMap.values.first; // '-ODzURssmtR0Yli_lN_n' anahtarıyla gelen veri
-        User user = User.fromMap(Map<String, dynamic>.from(userData)); 
+        var userData = userMap
+            .values.first; // '-ODzURssmtR0Yli_lN_n' anahtarıyla gelen veri
+        User user = User.fromMap(Map<String, dynamic>.from(userData));
         return user;
       } else {
         print("No user found with this phone number.");
@@ -482,93 +539,96 @@ Future<List<Map<String, dynamic>>> getLeaderboardData() async {
       return null;
     }
   }
-  
+
   Future<List<PopularFood>> getPopularFoodsFromRealtimeDatabase() async {
-  List<PopularFood> popularFoodsList = [];
-  try {
-    // 'popular_foods' düğümünden veri alıyoruz
-    DatabaseEvent event = await _db.child('PopularFood').once();  
-    DataSnapshot snapshot = event.snapshot;
+    List<PopularFood> popularFoodsList = [];
+    try {
+      // 'popular_foods' düğümünden veri alıyoruz
+      DatabaseEvent event = await _db.child('PopularFood').once();
+      DataSnapshot snapshot = event.snapshot;
 
-    if (snapshot.exists) {
-      var foodMap = Map<String, dynamic>.from(snapshot.value as Map);
+      if (snapshot.exists) {
+        var foodMap = Map<String, dynamic>.from(snapshot.value as Map);
 
-      foodMap.forEach((key, value) {
-        var foodData = Map<String, dynamic>.from(value);
-        popularFoodsList.add(PopularFood.fromMap(foodData));  // Veriyi PopularFood objesine dönüştürüp ekliyoruz
-      });
-      print("Popüler yemekler başarıyla alındı.");
-    } else {
-      print("No popular food data found.");
+        foodMap.forEach((key, value) {
+          var foodData = Map<String, dynamic>.from(value);
+          popularFoodsList.add(PopularFood.fromMap(
+              foodData)); // Veriyi PopularFood objesine dönüştürüp ekliyoruz
+        });
+        print("Popüler yemekler başarıyla alındı.");
+      } else {
+        print("No popular food data found.");
+      }
+    } catch (e) {
+      print("Error occurred while fetching popular food options: $e");
     }
-  } catch (e) {
-    print("Error occurred while fetching popular food options: $e");
+    return popularFoodsList;
   }
-  return popularFoodsList;
-}
 
-Future<List<Order>> getOrdersByUserPhone(String phone) async {
-  List<Order> userOrders = [];
-  try {
-    // 'orders' düğümünden telefon numarasına göre filtreleme yapıyoruz
+  Future<List<Order>> getOrdersByUserPhone(String phone) async {
+    List<Order> userOrders = [];
+    try {
+      // 'orders' düğümünden telefon numarasına göre filtreleme yapıyoruz
 
-    DatabaseEvent event = await _db
-        .child('orders')
-        .orderByChild('phone')
-        .equalTo(phone)
-        .once();
+      DatabaseEvent event =
+          await _db.child('orders').orderByChild('phone').equalTo(phone).once();
 
-    // Gelen snapshot verisini işleme
-    DataSnapshot snapshot = event.snapshot;
+      // Gelen snapshot verisini işleme
+      DataSnapshot snapshot = event.snapshot;
 
-    if (snapshot.exists) {
-      var ordersMap = Map<String, dynamic>.from(snapshot.value as Map);
+      if (snapshot.exists) {
+        var ordersMap = Map<String, dynamic>.from(snapshot.value as Map);
 
-      ordersMap.forEach((key, value) {
-        var orderData = Map<String, dynamic>.from(value);
-        userOrders.add(Order.fromMap(orderData));  // Veriyi Order objesine dönüştürüp listeye ekliyoruz
-      });
+        ordersMap.forEach((key, value) {
+          var orderData = Map<String, dynamic>.from(value);
+          userOrders.add(Order.fromMap(
+              orderData)); // Veriyi Order objesine dönüştürüp listeye ekliyoruz
+        });
 
-      print("Siparişler başarıyla alındı.");
-    } else {
-      print("Bu telefon numarasına ait sipariş bulunamadı.");
+        print("Siparişler başarıyla alındı.");
+      } else {
+        print("Bu telefon numarasına ait sipariş bulunamadı.");
+      }
+    } catch (e) {
+      print("Error occurred while fetching orders: $e");
     }
-  } catch (e) {
-    print("Error occurred while fetching orders: $e");
+    return userOrders;
   }
-  return userOrders;
-}
-Future<List<PopularFood>> getPopularFoodsByCategoryFromRealtimeDatabase(String category) async {
-  List<PopularFood> popularFoodsList = [];
-  try {
-    // 'PopularFood/{category}' yolundan veri alıyoruz
-   DatabaseEvent event = await _db
-        .child('PopularFood')
-        .orderByChild('category')
-        .equalTo(category)
-        .once();
 
-    DataSnapshot snapshot = event.snapshot;
+  Future<List<PopularFood>> getPopularFoodsByCategoryFromRealtimeDatabase(
+      String category) async {
+    List<PopularFood> popularFoodsList = [];
+    try {
+      // 'PopularFood/{category}' yolundan veri alıyoruz
+      DatabaseEvent event = await _db
+          .child('PopularFood')
+          .orderByChild('category')
+          .equalTo(category)
+          .once();
 
-    if (snapshot.exists) {
-      var foodMap = Map<String, dynamic>.from(snapshot.value as Map);
+      DataSnapshot snapshot = event.snapshot;
 
-      foodMap.forEach((key, value) {
-        // Her bir öğeyi Map formatından, PopularFood nesnesine dönüştürüp listeye ekliyoruz
-        var foodData = Map<String, dynamic>.from(value);
-        popularFoodsList.add(PopularFood.fromMap(foodData));  // Veriyi PopularFood objesine dönüştürüp ekliyoruz
-      });
-      print("Kategoriye göre popüler yemekler başarıyla alındı.");
-    } else {
-      print("Kategoriye ait popüler yemek verisi bulunamadı: $category");
+      if (snapshot.exists) {
+        var foodMap = Map<String, dynamic>.from(snapshot.value as Map);
+
+        foodMap.forEach((key, value) {
+          // Her bir öğeyi Map formatından, PopularFood nesnesine dönüştürüp listeye ekliyoruz
+          var foodData = Map<String, dynamic>.from(value);
+          popularFoodsList.add(PopularFood.fromMap(
+              foodData)); // Veriyi PopularFood objesine dönüştürüp ekliyoruz
+        });
+        print("Kategoriye göre popüler yemekler başarıyla alındı.");
+      } else {
+        print("Kategoriye ait popüler yemek verisi bulunamadı: $category");
+      }
+    } catch (e) {
+      print(
+          "Kategoriye göre popüler yemek seçenekleri alınırken hata oluştu: $e");
     }
-  } catch (e) {
-    print("Kategoriye göre popüler yemek seçenekleri alınırken hata oluştu: $e");
+    return popularFoodsList;
   }
-  return popularFoodsList;
-}
 
-Future<Setting?> fetchSettingsFromDatabase() async {
+  Future<Setting?> fetchSettingsFromDatabase() async {
     try {
       final snapshot = await _db.child('Settings').get();
       if (snapshot.exists) {
@@ -583,89 +643,86 @@ Future<Setting?> fetchSettingsFromDatabase() async {
       return null;
     }
   }
+
   Future<bool> updateUserProfilePic(String phone, String profilePicUrl) async {
-  try {
-    // Telefon numarasına göre kullanıcı verisini alıyoruz
-    DatabaseEvent event = await _db
-        .child("users")
-        .orderByChild('phone')
-        .equalTo(phone)
-        .once();
+    try {
+      // Telefon numarasına göre kullanıcı verisini alıyoruz
+      DatabaseEvent event =
+          await _db.child("users").orderByChild('phone').equalTo(phone).once();
 
-    DataSnapshot snapshot = event.snapshot;
+      DataSnapshot snapshot = event.snapshot;
 
-    if (snapshot.exists) {
-      // Kullanıcı verisini alıyoruz
-      var userMap = Map<String, dynamic>.from(snapshot.value as Map);
+      if (snapshot.exists) {
+        // Kullanıcı verisini alıyoruz
+        var userMap = Map<String, dynamic>.from(snapshot.value as Map);
 
-      // Kullanıcı anahtarını alıyoruz
-      String userKey = userMap.keys.first;
+        // Kullanıcı anahtarını alıyoruz
+        String userKey = userMap.keys.first;
 
-      // Profil resmi URL'sini güncelliyoruz
-      await _db.child("users/$userKey").update({"profilePic": profilePicUrl});
+        // Profil resmi URL'sini güncelliyoruz
+        await _db.child("users/$userKey").update({"profilePic": profilePicUrl});
 
-      print(
-          "Kullanıcının profil resmi başarıyla güncellendi. Yeni URL: $profilePicUrl");
-      return true;
-    } else {
-      print("Bu telefon numarasına sahip bir kullanıcı bulunamadı.");
+        print(
+            "Kullanıcının profil resmi başarıyla güncellendi. Yeni URL: $profilePicUrl");
+        return true;
+      } else {
+        print("Bu telefon numarasına sahip bir kullanıcı bulunamadı.");
+        return false;
+      }
+    } catch (e) {
+      print("Profil resmi güncellenirken bir hata oluştu: $e");
       return false;
     }
-  } catch (e) {
-    print("Profil resmi güncellenirken bir hata oluştu: $e");
-    return false;
   }
-}
 
- // Firebase Realtime Database'de bir kullanıcının puanını güncelleme
+  // Firebase Realtime Database'de bir kullanıcının puanını güncelleme
   Future<bool> updateUserPoints(String phone, int point, bool arttir) async {
-  try {
-    // Telefon numarasına göre kullanıcı verisini alıyoruz
-    DatabaseEvent event = await _db
-        .child("users")
-        .orderByChild('phone')
-        .equalTo(phone)
-        .once();
+    try {
+      // Telefon numarasına göre kullanıcı verisini alıyoruz
+      DatabaseEvent event =
+          await _db.child("users").orderByChild('phone').equalTo(phone).once();
 
-    DataSnapshot snapshot = event.snapshot;
+      DataSnapshot snapshot = event.snapshot;
 
-    if (snapshot.exists) {
-      // Kullanıcı verisini alıyoruz
-      var userMap = Map<String, dynamic>.from(snapshot.value as Map);
+      if (snapshot.exists) {
+        // Kullanıcı verisini alıyoruz
+        var userMap = Map<String, dynamic>.from(snapshot.value as Map);
 
-      // Kullanıcı anahtarını alıyoruz
-      String userKey = userMap.keys.first;
+        // Kullanıcı anahtarını alıyoruz
+        String userKey = userMap.keys.first;
 
-      // Mevcut puanı alıyoruz
-      Map<String, dynamic> userData =
-          Map<String, dynamic>.from(userMap[userKey]);
-      int currentPoint = userData['point'] ?? 0;
-int updatedPoint = 0;
-if(arttir){
-updatedPoint = currentPoint + point;
-}else{
-  updatedPoint = currentPoint - point;
-}
+        // Mevcut puanı alıyoruz
+        Map<String, dynamic> userData =
+            Map<String, dynamic>.from(userMap[userKey]);
+        int currentPoint = userData['point'] ?? 0;
+        int updatedPoint = 0;
+        if (arttir) {
+          updatedPoint = currentPoint + point;
+        } else {
+          updatedPoint = currentPoint - point;
+        }
 
-      // Kullanıcının puan bilgisini güncelliyoruz
-      await _db.child("users/$userKey").update({"point": updatedPoint});
+        // Kullanıcının puan bilgisini güncelliyoruz
+        await _db.child("users/$userKey").update({"point": updatedPoint});
 
-      print("Kullanıcının puanı başarıyla güncellendi. Yeni puan: $updatedPoint");
-      return true;
-    } else {
-      print("Bu telefon numarasına sahip bir kullanıcı bulunamadı.");
+        print(
+            "Kullanıcının puanı başarıyla güncellendi. Yeni puan: $updatedPoint");
+        return true;
+      } else {
+        print("Bu telefon numarasına sahip bir kullanıcı bulunamadı.");
+        return false;
+      }
+    } catch (e) {
+      print("Puan güncellenirken bir hata oluştu: $e");
       return false;
     }
-  } catch (e) {
-    print("Puan güncellenirken bir hata oluştu: $e");
-    return false;
   }
-}
 
-Future<List<Campaign>> getCampaignsFromRealtimeDatabase() async {
+  Future<List<Campaign>> getCampaignsFromRealtimeDatabase() async {
     List<Campaign> campaignList = [];
     try {
-      DatabaseEvent event = await _db.child('Campaigns').once(); // 'Campaigns' düğümünü alıyoruz
+      DatabaseEvent event =
+          await _db.child('Campaigns').once(); // 'Campaigns' düğümünü alıyoruz
       DataSnapshot snapshot = event.snapshot;
 
       if (snapshot.exists) {
@@ -673,7 +730,8 @@ Future<List<Campaign>> getCampaignsFromRealtimeDatabase() async {
 
         campaignsMap.forEach((key, value) {
           var campaignData = Map<String, dynamic>.from(value);
-          campaignList.add(Campaign.fromMap(key, campaignData)); // Veriyi Campaign nesnesine dönüştürüp ekliyoruz
+          campaignList.add(Campaign.fromMap(key,
+              campaignData)); // Veriyi Campaign nesnesine dönüştürüp ekliyoruz
         });
         print("Kampanyalar başarıyla alındı.");
       } else {
@@ -684,11 +742,12 @@ Future<List<Campaign>> getCampaignsFromRealtimeDatabase() async {
     }
     return campaignList;
   }
-  
-Future<List<FoodOption>> getFoodOptionsFromRealtimeDatabase() async {
+
+  Future<List<FoodOption>> getFoodOptionsFromRealtimeDatabase() async {
     List<FoodOption> foodOptionsList = [];
     try {
-      DatabaseEvent event = await _db.child('menü').once();  // 'menü' düğümünü alıyoruz
+      DatabaseEvent event =
+          await _db.child('menü').once(); // 'menü' düğümünü alıyoruz
       DataSnapshot snapshot = event.snapshot;
 
       if (snapshot.exists) {
@@ -696,7 +755,8 @@ Future<List<FoodOption>> getFoodOptionsFromRealtimeDatabase() async {
 
         foodMap.forEach((key, value) {
           var foodData = Map<String, dynamic>.from(value);
-          foodOptionsList.add(FoodOption.fromMap(foodData));  // Veriyi FoodOption objesine dönüştürüp ekliyoruz
+          foodOptionsList.add(FoodOption.fromMap(
+              foodData)); // Veriyi FoodOption objesine dönüştürüp ekliyoruz
         });
         print("Veriler başarıyla alındı.");
       } else {
@@ -708,7 +768,7 @@ Future<List<FoodOption>> getFoodOptionsFromRealtimeDatabase() async {
     return foodOptionsList;
   }
   // Firestore'a veri ekleme
-  }
+}
 
 class NotificationModel {
   String? description;
@@ -732,14 +792,14 @@ class NotificationModel {
 
   // Firebase'den gelen JSON'u modele dönüştürme
   factory NotificationModel.fromJson(String id, Map<dynamic, dynamic> json) {
-  return NotificationModel(
-    description: json['Description'] as String,
-    dateTime: DateTime.parse(json['DateTime'] as String),
-    isActive: json['IsActive'] as bool,
-  );
-
+    return NotificationModel(
+      description: json['Description'] as String,
+      dateTime: DateTime.parse(json['DateTime'] as String),
+      isActive: json['IsActive'] as bool,
+    );
   }
 }
+
 class UserOrder {
   final String userPhone;
   final double point;
@@ -801,6 +861,7 @@ class OrderResult {
     };
   }
 }
+
 class Campaign {
   final String id;
   final String title;
@@ -867,7 +928,7 @@ class CartItem {
   }
 }
 
-  class Order {
+class Order {
   final String phone;
   final int price;
   final String date;
@@ -900,6 +961,7 @@ class CartItem {
     };
   }
 }
+
 class FoodOption {
   final String name;
   final String image;
@@ -953,14 +1015,19 @@ class User {
     );
   }
 }
+
 class PopularFood {
   final String name;
   final String image;
-  final String rating; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
-  final String clients; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
+  final String
+      rating; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
+  final String
+      clients; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
   final String price; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
-  final String description; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
-  final String category; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
+  final String
+      description; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
+  final String
+      category; // Örnek: yemeklerin puanı, popülerlik için kullanılabilir
 
   PopularFood({
     required this.name,
@@ -985,6 +1052,7 @@ class PopularFood {
     );
   }
 }
+
 class QuizUser {
   final String userPhone;
   final String dateTime;
@@ -1005,6 +1073,7 @@ class QuizUser {
     );
   }
 }
+
 class Setting {
   final bool isCark;
   final bool isQuiz;

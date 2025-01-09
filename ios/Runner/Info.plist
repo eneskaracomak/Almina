@@ -41,5 +41,28 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>CFBundleIcons~ipad</key>
+    <dict>
+        <key>CFBundlePrimaryIcon</key>
+        <dict>
+            <key>CFBundleIconFiles</key>
+            <array>
+                <string>Icon.png</string>
+                <string>Icon-60@2x.png</string>
+                <string>Icon-72.png</string>
+                <string>Icon-72@2x.png</string>
+                <string>Icon-76.png</string>
+                <string>Icon-76@2x.png</string>
+                <string>Icon-83.5@2x.png</string>
+            </array>
+        </dict>
+    </dict>
+    <!-- Kamera Kullanımı Açıklaması -->
+    <key>NSCameraUsageDescription</key>
+    <string>Uygulama, kamera erişimi gerektiriyor. Bu özellik, fotoğraf çekmek ve tarama yapmak için kullanılacaktır.</string>
 </dict>
 </plist>
