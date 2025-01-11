@@ -94,7 +94,41 @@ class FirebaseService {
 }
 
 
+final DatabaseReference _luckyWheelRef =
+      FirebaseDatabase.instance.ref().child('LuckyWheel');
 
+  Future<void> addLuckyWheelItems(
+      List<Map<String, dynamic>> itemsWithProbabilities) async {
+    try {
+      for (var item in itemsWithProbabilities) {
+        final newLuckyWheelRef = _luckyWheelRef.push();
+        await newLuckyWheelRef.set(item);
+      }
+      print('Lucky wheel items successfully added.');
+    } catch (e) {
+      print('Error while adding lucky wheel items: $e');
+    }
+  }
+    Future<List<Map<String, dynamic>>> fetchLuckyWheelItems() async {
+    try {
+      final snapshot = await _luckyWheelRef.get();
+      if (snapshot.exists) {
+        final items = <Map<String, dynamic>>[];
+        for (var child in snapshot.children) {
+          final data = Map<String, dynamic>.from(child.value as Map);
+          items.add(data);
+        }
+        print('Lucky wheel items successfully fetched.');
+        return items;
+      } else {
+        print('No lucky wheel items found.');
+        return [];
+      }
+    } catch (e) {
+      print('Error while fetching lucky wheel items: $e');
+      return [];
+    }
+  }
   // Firebase Realtime Database'e veri ekleme
   Future<void> addNotification(NotificationModel notification) async {
     try {
