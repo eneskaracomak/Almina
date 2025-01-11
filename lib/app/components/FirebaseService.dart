@@ -70,28 +70,48 @@ class FirebaseService {
   }
 
 
-
- Future<List<Story>> fetchStories() async {
+Future<List<Story>> fetchStories() async {
   try {
     final snapshot = await _storiesRef.get();
     if (snapshot.exists) {
       final notifications = <Story>[];
-      print(snapshot);
+
+      // Veriyi konsola yazdırarak ne geldiğini kontrol edelim
+      print('Snapshot data: ${snapshot.value}');
+
       for (var child in snapshot.children) {
         final data = child.value;
-        if (data is Map<Object?, Object?>) {
-          final storyData = data.map((key, value) => MapEntry(key.toString(), value));
+
+        // Verinin türünü kontrol et
+        if (data is Map<dynamic, dynamic>) {
+          // Eğer veri map ise, key ve value'yu string'e dönüştürerek storyData'ya ekliyoruz
+          final storyData = {
+            'image': data['image'] ?? '', // Null ise boş string
+            'tumbnail': data['tumbnail'] ?? '', // Null ise boş string
+            'name': data['name'] ?? '' // Null ise boş string
+          };
+
+          // Story modelini json ile al ve listeye ekle
           notifications.add(Story.fromJson(storyData));
+        } else {
+          // Beklenmedik veri türü için log
+          print('Unexpected data format for child: $data');
         }
       }
       return notifications;
+    } else {
+      // Snapshot boşsa
+      print('No stories found');
+      return [];
     }
-    return [];
   } catch (e) {
     print('Error while fetching active notifications: $e');
     return [];
   }
 }
+
+
+
 
 
 final DatabaseReference _luckyWheelRef =
@@ -1254,8 +1274,7 @@ class AdBanner {
       'Phone': phone,
     };
   }
-}
-class Story {
+}class Story {
   final String thumbnail; // Küçük resim URL'si
   final String name;      // Hikaye adı
   final String image;     // Hikaye tam boy resim URL'si
@@ -1269,9 +1288,9 @@ class Story {
   // JSON'dan oluşturmak için bir factory metodu
   factory Story.fromJson(Map<String, dynamic> json) {
     return Story(
-      thumbnail: json['thumbnail'] as String,
-      name: json['name'] as String,
-      image: json['image'] as String,
+      thumbnail: json['tumbnail'] as String? ?? '', // Eğer null ise boş string
+      name: json['name'] as String? ?? '',           // Eğer null ise boş string
+      image: json['image'] as String? ?? '',         // Eğer null ise boş string
     );
   }
 
