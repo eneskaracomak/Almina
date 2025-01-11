@@ -41,6 +41,7 @@ class _HomeState extends State<Home> {
     getNotifications();
   }
 
+
   List<Map<String, dynamic>> notifications = [];
   Setting? setting;
   void getNotifications() async {
@@ -107,6 +108,7 @@ List<StoryItem> generateStoryItems(List<Story> stories) {
   // SharedPreferences'ten telefon numarasını alıp Firebase'den kullanıcı verisini çekiyoruz
   Future<void> _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    getNotifications();
 
     String? phone = prefs.getString(
         'userPhone'); // SharedPreferences'ten telefon numarasını alıyoruz
@@ -155,8 +157,10 @@ List<StoryItem> generateStoryItems(List<Story> stories) {
         ),
       );
     } else {
-      return SingleChildScrollView(
-        child: SafeArea(
+      return  RefreshIndicator(
+        onRefresh: _loadUserData,  // Sayfa üstten çekildiğinde _loadData çalışır
+        child:SingleChildScrollView(
+        child:  SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -674,7 +678,7 @@ PhoneBannerWidget(
             ],
           ),
         ),
-      );
+      ));
     }
   }
 }
