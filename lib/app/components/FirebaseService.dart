@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:stories_for_flutter/stories_for_flutter.dart';
 
 class FirebaseService {
   final DatabaseReference _db =
@@ -8,7 +9,8 @@ class FirebaseService {
       FirebaseFirestore.instance; // Firestore referansı
   final DatabaseReference _notificationRef =
       FirebaseDatabase.instance.ref().child('Notifications');
-
+  final DatabaseReference _storiesRef =
+      FirebaseDatabase.instance.ref().child('Stories');
   Future<void> updateNotification(String description, DateTime dateTime) async {
     try {
       // Tüm bildirimleri al
@@ -66,6 +68,32 @@ class FirebaseService {
       return [];
     }
   }
+
+
+
+ Future<List<Story>> fetchStories() async {
+  try {
+    final snapshot = await _storiesRef.get();
+    if (snapshot.exists) {
+      final notifications = <Story>[];
+      print(snapshot);
+      for (var child in snapshot.children) {
+        final data = child.value;
+        if (data is Map<Object?, Object?>) {
+          final storyData = data.map((key, value) => MapEntry(key.toString(), value));
+          notifications.add(Story.fromJson(storyData));
+        }
+      }
+      return notifications;
+    }
+    return [];
+  } catch (e) {
+    print('Error while fetching active notifications: $e');
+    return [];
+  }
+}
+
+
 
   // Firebase Realtime Database'e veri ekleme
   Future<void> addNotification(NotificationModel notification) async {
@@ -532,6 +560,32 @@ Future<void> addReservation(Reservation reservation) async {
     }
   }
 
+Future<List<AdBanner>> getAdBannersFromRealtimeDatabase() async {
+  List<AdBanner> adBannerList = [];
+  try {
+    // Firebase Realtime Database bağlantısını oluşturuyoruz
+    DatabaseReference db = FirebaseDatabase.instance.reference();
+    
+    // 'AdBanners' düğümünden veri alıyoruz
+    DatabaseEvent event = await db.child('AdBanner').once();
+    DataSnapshot snapshot = event.snapshot;
+
+    if (snapshot.exists) {
+      var bannerMap = Map<String, dynamic>.from(snapshot.value as Map);
+
+      bannerMap.forEach((key, value) {
+        var bannerData = Map<String, dynamic>.from(value);
+        adBannerList.add(AdBanner.fromJson(bannerData)); // Veriyi AdBanner objesine dönüştürüp ekliyoruz
+      });
+      print("Reklam banner'ları başarıyla alındı.");
+    } else {
+      print("Reklam banner verisi bulunamadı.");
+    }
+  } catch (e) {
+    print("Reklam banner'ları alınırken bir hata oluştu: $e");
+  }
+  return adBannerList;
+}
   Future<List<PopularFood>> getPopularFoodsFromRealtimeDatabase() async {
     List<PopularFood> popularFoodsList = [];
     try {
@@ -1036,7 +1090,7 @@ class PopularFood {
     return PopularFood(
       name: map['name'] ?? '',
       image: map['image'] ?? '',
-      rating: map['rating'] ?? '',
+      rating: map['rate'] ?? '',
       price: map['price'] ?? '',
       clients: map['clients'] ?? '',
       description: map['description'] ?? '',
@@ -1071,6 +1125,7 @@ class Setting {
   final bool isQuiz;
   final bool isAdBanner1;
   final bool isAdBanner2;
+  final bool isStorie;
   final String Version;
 
   Setting({
@@ -1079,6 +1134,7 @@ class Setting {
     required this.isAdBanner1,
     required this.isAdBanner2,
     required this.Version,
+    required this.isStorie,
   });
 
   // Firebase'den gelen veriyi sınıfa dönüştürmek için factory
@@ -1086,6 +1142,7 @@ class Setting {
     return Setting(
       isCark: json['isCark'] ?? false,
       isQuiz: json['isQuiz'] ?? false,
+      isStorie: json['isStorie'] ?? false,
       isAdBanner1: json['isAdBanner1'] ?? false,
       isAdBanner2: json['isAdBanner2'] ?? false,
       Version: json['Version'] ?? "",
@@ -1128,5 +1185,68 @@ class Reservation {
       personCount: json['personCount'],
       userId: json['userId'],
     );
+  }
+}
+
+class AdBanner {
+  final String image;
+  final int index;
+  final String url;
+  final String phone;
+
+  AdBanner({
+    required this.image,
+    required this.index,
+    required this.url,
+    required this.phone,
+  });
+
+  // JSON'dan AdBanner nesnesi oluşturmak için factory constructor
+  factory AdBanner.fromJson(Map<String, dynamic> json) {
+    return AdBanner(
+      image: json['Image'] ?? '',
+      index: json['Index'] ?? 0,
+      url: json['Url'] ?? '',
+      phone: json['Phone'] ?? '',
+    );
+  }
+
+  // AdBanner nesnesini JSON formatına dönüştürmek için toJson metodu
+  Map<String, dynamic> toJson() {
+    return {
+      'Image': image,
+      'Index': index,
+      'Url': url,
+      'Phone': phone,
+    };
+  }
+}
+class Story {
+  final String thumbnail; // Küçük resim URL'si
+  final String name;      // Hikaye adı
+  final String image;     // Hikaye tam boy resim URL'si
+
+  Story({
+    required this.thumbnail,
+    required this.name,
+    required this.image,
+  });
+
+  // JSON'dan oluşturmak için bir factory metodu
+  factory Story.fromJson(Map<String, dynamic> json) {
+    return Story(
+      thumbnail: json['thumbnail'] as String,
+      name: json['name'] as String,
+      image: json['image'] as String,
+    );
+  }
+
+  // JSON'a dönüştürmek için bir metod
+  Map<String, dynamic> toJson() {
+    return {
+      'thumbnail': thumbnail,
+      'name': name,
+      'image': image,
+    };
   }
 }

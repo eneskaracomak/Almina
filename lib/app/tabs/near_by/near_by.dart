@@ -16,14 +16,42 @@ class _NearByState extends State<NearBy> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: theme.primaryColor,
-          title: Text(
-            'Liderlik Sıralaması',
-            style: TextStyle(color: Colors.white, fontSize: 20),
-          ),
-          centerTitle: true,
-          elevation: 0.0,
-        ),
+  title: Text(
+    'Liderlik Sıralaması',
+    style: TextStyle(
+      fontSize: 22, 
+      fontWeight: FontWeight.bold, 
+      fontFamily: 'Cera Pro', 
+      color: Colors.white,
+    ),
+  ),
+  centerTitle: true,
+  flexibleSpace: Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Color.fromARGB(255, 255, 183, 77), // Üst renk
+          Color.fromARGB(255, 228, 161, 37), // Alt renk
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
+  ),
+  elevation: 4.0, // Gölge derinliği
+  shadowColor: Colors.grey.withOpacity(0.5), // Gölge rengi
+  actions: [
+    IconButton(
+      icon: Icon(Icons.leaderboard_rounded, color: Colors.white),
+      onPressed: () {
+        // Liderlik simgesine tıklanınca yapılacak işlem
+      },
+    ),
+   
+  ],
+
+),
+
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           child: DefaultTabController(

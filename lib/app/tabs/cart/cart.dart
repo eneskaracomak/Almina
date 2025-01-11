@@ -97,25 +97,50 @@ class _CartState extends State<Cart> with TickerProviderStateMixin {
       0,
       (sum, food) => sum + (food.quantity * food.price.toInt()),
     );
-
+    
     // Sepet puanını kontrol et
-    if (totalCartPoints > userPoints) {
-      // Kullanıcı puanı yetersizse popup göster
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text("Puan Yetersiz"),
-          content: Text(
-              "Sepetteki toplam puan ($totalCartPoints), mevcut puanınızdan ($userPoints) fazla."),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Tamam"),
-            ),
-          ],
-        ),
-      );
-    } else {
+if (totalCartPoints > userPoints) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        "Sepetteki toplam puan ($totalCartPoints), mevcut puanınızdan ($userPoints) fazla.",
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.red, // Uyarı rengi için kırmızı seçildi
+      action: SnackBarAction(
+        label: "Tamam",
+        textColor: Colors.white,
+        onPressed: () {
+          // "Tamam" butonuna tıklanıldığında yapılacaklar
+        },
+      ),
+      duration: Duration(seconds: 5), // SnackBar'ın ekranda kalma süresi
+    ),
+  );
+}
+
+else if (totalCartPoints == 0) {
+  // Kullanıcı puanı yetersizse SnackBar göster
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        "Sepetinizde ürün bulunmamaktadır.",
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.orange,
+      action: SnackBarAction(
+        label: "Tamam",
+        textColor: Colors.white,
+        onPressed: () {
+          // SnackBar üzerindeki "Tamam" butonuna basıldığında yapılacaklar
+        },
+      ),
+      duration: Duration(seconds: 3), // SnackBar ne kadar süre görünür kalacak
+    ),
+  );
+}
+
+    else {
       // İşlem başarılı: QR kodu oluştur
       String qrData = "Cart: \n";
       for (var food in foods) {
@@ -249,35 +274,67 @@ class _CartState extends State<Cart> with TickerProviderStateMixin {
       },
     );
   }
+@override
+Widget build(BuildContext context) {
+  ThemeData theme = Theme.of(context);
 
-  @override
-  Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
-
-    return SafeArea(      
-      child: Column(
-        children: <Widget>[
-          CustomHeader(
-            title: 'Sepetim',
-            quantity: foods.length,
-            internalScreen: false,
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: TabBarView(
-                controller: _tabController,
-                children: <Widget>[
-                  Column(
+  return SafeArea(
+    child: Column(
+      children: <Widget>[
+        // Özel başlık
+        CustomHeader(
+          title: 'Sepetim',
+          quantity: foods.length,
+          internalScreen: false,
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: foods.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Sepet boş ekranı
+                        Icon(
+                          Icons.shopping_cart_outlined,
+                          size: 100.0,
+                          color: theme.primaryColor.withOpacity(0.7),
+                        ),
+                        SizedBox(height: 20.0),
+                        Text(
+                          'Sepetiniz Boş',
+                          style: TextStyle(
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.bold,
+                            color: theme.primaryColorDark,
+                          ),
+                        ),
+                        SizedBox(height: 10.0),
+                        Text(
+                          'Hemen ürün ekleyin ve sipariş oluşturun.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 30.0),
+                       
+                      ],
+                    ),
+                  )
+                : Column(
                     children: <Widget>[
                       Expanded(
-                        child: renderAddList(),
+                        child: renderAddList(), // Ürün listesi
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 15.0,
-                          horizontal: 35.0,
+                          vertical: 10.0,
+                          horizontal: 30.0,
                         ),
+                        margin: EdgeInsets.only(bottom: 15),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10.0),
                           color: theme.primaryColor,
@@ -288,18 +345,19 @@ class _CartState extends State<Cart> with TickerProviderStateMixin {
                             'QR Oluştur',
                             style: TextStyle(
                               color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.0,
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 }

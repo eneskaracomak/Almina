@@ -136,9 +136,9 @@ class _AccountState extends State<Account> {
       if (userSnapshot.exists) {
         final userData = (userSnapshot.value as Map).values.first as Map;
         setState(() {
-          userName = userData['name'] ?? 'Bilinmiyor';
+          userName = userData['name'] ?? '';
           profileImage = userData['profilePic'] ?? 'https://alminacafe.com/uploads/dummy.jpg';
-          userAddress = userData['address'] ?? 'Adres eklenmemiş';
+          userAddress = userData['address'] ?? '';
           userPoint = userData['point'] ?? 0;
         });
         _nameController.text = userName;
@@ -263,15 +263,51 @@ ScaffoldMessenger.of(context).showSnackBar(
               padding: const EdgeInsets.only(top: 60.0),
               child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      _pickImage();
-                    },
-                    child: CircleAvatar(
-                      radius: 70.0,
-                      backgroundImage: NetworkImage(profileImage),
-                    ),
-                  ),
+               GestureDetector(
+  onTap: () {
+    _pickImage();
+
+  },
+  child: Stack(
+    alignment: Alignment.center,
+    children: [
+      CircleAvatar(
+        backgroundColor: Colors.white,
+        radius: 70.0,
+        backgroundImage: NetworkImage(profileImage),
+      ),
+      if (profileImage == "https://alminacafe.com/uploads/dummy.jpg") ...[
+      Container(
+        width: 140,
+        height: 140,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black.withOpacity(0.4),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.camera_alt,
+              color: Colors.white,
+              size: 30,
+            ),
+            SizedBox(height: 5),
+            Text(
+              "Fotoğraf Yükle",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ]],
+  ),
+),
+
                   SizedBox(height: 20.0),
                   Text(
                     userName,
@@ -304,6 +340,7 @@ ScaffoldMessenger.of(context).showSnackBar(
                 ],
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 1.0),
               child: ElevatedButton(
@@ -325,7 +362,7 @@ ScaffoldMessenger.of(context).showSnackBar(
 
 // Ayarlar Butonları
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              padding: const EdgeInsets.only(left: 20.0, right: 10.0),
               child: Column(
                 children: [
                   _buildSettingOption(title:'Bildirimler',icon: Icons.notifications),
@@ -336,7 +373,7 @@ ScaffoldMessenger.of(context).showSnackBar(
 
             // Çıkış Yap Butonu
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
+              padding: const EdgeInsets.only(top: 10.0),
               child: ElevatedButton(
                 onPressed: () async {
                 SharedPreferences prefs = await SharedPreferences.getInstance();

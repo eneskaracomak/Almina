@@ -1,7 +1,9 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:food_bit_app/app/components/FirebaseService.dart';
 import 'package:food_bit_app/app/tabs/account/account.dart';
 import 'package:food_bit_app/app/tabs/cart/cart.dart';
+import 'package:food_bit_app/app/tabs/home/NotificationsPage.dart';
 import 'package:food_bit_app/app/tabs/home/details/CheckedInUsersPage.dart';
 import 'dart:async';
 
@@ -26,6 +28,8 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     _resetTimer = Timer(Duration(hours: 1), _resetCheckIn);
+    Timer(Duration(seconds: 10), getNotifications);
+
   }
 
   @override
@@ -43,7 +47,6 @@ class _AppState extends State<App> {
     );
     return;
   }
-
   DateTime now = DateTime.now();
   String currentDate = "${now.year}-${now.month}-${now.day}";
   String? lastCheckInTimeString = prefs.getString('lastCheckInTime');
@@ -127,7 +130,21 @@ class _AppState extends State<App> {
   }
 }
 
+  FirebaseService _firebaseService = new FirebaseService();
 
+ List<Map<String, dynamic>> notifications = [];
+  Setting? setting;
+  void getNotifications() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+print("enes");
+    String? phone = prefs.getString('userPhone');
+    List<Map<String, dynamic>> notifications =
+        await _firebaseService.fetchUserNotifications(phone!);
+    setState(() {
+      this.notifications =
+          notifications; // Ekranda göstermek için state'e atayın
+    });
+  }
 
 
   void _resetCheckIn() {
@@ -137,57 +154,71 @@ class _AppState extends State<App> {
       checkedInUsers.clear();
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
+     
+          
         body: TabBarView(
-          children: <Widget>[
-            Home(tableInfo: '',),
+          children: [
+            Home(tableInfo: ''),
             NearBy(),
             Cart(),
             Account(),
           ],
         ),
-        bottomNavigationBar: Material(
-          color: Colors.white,
-          child:Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(46),
-                topRight: Radius.circular(46),
-              ),
-            
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
             ),
-            child: TabBar(
-            labelPadding: const EdgeInsets.only(bottom: 10),
-            labelStyle: TextStyle(fontSize: 16.0),
-            indicatorColor: Colors.transparent,
-            labelColor: Theme.of(context).primaryColor,
-            unselectedLabelColor: Colors.black54,
-            tabs: <Widget>[
-              Tab(icon: Icon(Icons.home, size: 28), text: 'Anasayfa'),
-              Tab(icon: Icon(Icons.workspace_premium_rounded, size: 28), text: 'Liderlik'),
-              Tab(icon: Icon(Icons.card_travel, size: 28), text: 'Sepetim'),
-              Tab(icon: Icon(Icons.person_outline, size: 28), text: 'Hesabım'),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade400,
+                offset: Offset(0, -1),
+                blurRadius: 10,
+              ),
             ],
           ),
-        )),
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 20, right: 20),
-          child: FloatingActionButton(
-            onPressed: _handleCheckIn,
-            backgroundColor: Colors.orange,
-            child: Icon(
-              _isCheckedIn ? Icons.location_on : Icons.add_location_outlined,
-              size: 30,
+          child: TabBar(
+            labelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            indicator: UnderlineTabIndicator(
+              borderSide:
+                  BorderSide(color: Theme.of(context).primaryColor, width: 3),
             ),
-            tooltip: _isCheckedIn ? 'Buradakiler' : 'Check-in Yap',
+            labelColor: Theme.of(context).primaryColor,
+            unselectedLabelColor: Colors.black54,
+            tabs: [
+              Tab(icon: Icon(Icons.home, size: 26), text: 'Anasayfa'),
+              Tab(icon: Icon(Icons.explore, size: 26), text: 'Liderlik'),
+              Tab(icon: Icon(Icons.shopping_cart, size: 26), text: 'Sepetim'),
+              Tab(icon: Icon(Icons.person, size: 26), text: 'Hesabım'),
+            ],
           ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: FloatingActionButton(
+  onPressed: () {_handleCheckIn();}, // Check-in işlemi
+  backgroundColor: _isCheckedIn ? Colors.green : Colors.orange,
+  child: Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle, // Daire şeklinde
+    ),
+    child:Icon(      
+        _isCheckedIn ? Icons.location_on : Icons.add_location_alt,
+        size: 30, // İkonun boyutunu artırdım
+        color: _isCheckedIn ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 240, 240, 240), // İkon rengi
+        
+      ),
+    
+  ),
+),
+
+
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );
   }

@@ -313,7 +313,7 @@ class _QuizTimerWidgetState extends State<QuizTimerWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(right: 5, left: 5),
+      margin: EdgeInsets.only(left: 10, right: 15,top: 10),
       height: 55,
       padding: EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -352,11 +352,11 @@ class _QuizTimerWidgetState extends State<QuizTimerWidget> {
                     ),
                   ),
                   child: Text("Katıl",
-                      style: TextStyle(fontSize: 14, color: Colors.white)),
+                      style: TextStyle(fontSize: 11, color: Colors.white)),
                 )
               : Text(
                   "Süre: ${_formatTime(_remainingSeconds)}",
-                  style: TextStyle(fontSize: 14, color: Colors.white),
+                  style: TextStyle(fontSize: 11, color: Colors.white),
                 ),
         ],
       ),

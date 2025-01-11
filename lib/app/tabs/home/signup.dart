@@ -39,7 +39,7 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isLoading = false; // Buton durumu için bir kontrol değişkeni
   bool _isPhoneNumberValid(String phoneNumber) {
     // Telefon numarasının 11 haneli ve "053" ile başlaması gerektiğini kontrol et
-    return phoneNumber.length == 11 && phoneNumber.startsWith('053');
+    return phoneNumber.length == 11 && phoneNumber.startsWith('05');
   }
   Future<void> _signUp() async {
     // Kullanıcı verilerini al
@@ -140,7 +140,7 @@ class _SignUpPageState extends State<SignUpPage> {
             border: InputBorder.none,
             fillColor: Color(0xfff3f3f4),
             filled: true,
-            hintText: isPhoneNumber ? "05" : null,
+            hintText: isPhoneNumber ? "" : null,
           ),
         ),
       ],

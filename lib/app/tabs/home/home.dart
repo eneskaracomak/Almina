@@ -10,6 +10,8 @@ import 'package:food_bit_app/app/tabs/home/productlist.dart';
 import 'package:food_bit_app/app/tabs/quiz/widgets/QuizTimerWidget.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stories_for_flutter/stories_for_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Home extends StatefulWidget {
   final String tableInfo;
@@ -26,6 +28,10 @@ class _HomeState extends State<Home> {
   List<Campaign> campaign = [];
   List<PopularFood>? popularFood;
   List<Order>? orders;
+  List<Story>? stories;
+  late List<StoryItem> storyItems;
+  List<AdBanner>? adBanners;
+  AdBanner? firsBanner;
   final FirebaseService _firebaseService = FirebaseService();
 
   @override
@@ -50,6 +56,53 @@ class _HomeState extends State<Home> {
       setting = setting2;
     });
   }
+List<StoryItem> generateStoryItems(List<Story> stories) {
+  Map<String, List<Scaffold>> groupedStories = {}; // Türü List<Scaffold> olarak tanımla
+
+  // Listeyi dönerek verileri gruplama
+  for (var story in stories) {
+    if (groupedStories.containsKey(story.name)) {
+      // Eğer aynı isimde bir grup varsa, mevcut listeye yeni hikayeyi ekle
+      groupedStories[story.name]!.add(
+        Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                fit: BoxFit.cover,
+                image: NetworkImage(story.image),
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Eğer grup yoksa, yeni bir grup oluştur ve hikayeyi ekle
+      groupedStories[story.name] = [
+        Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                fit: BoxFit.cover,
+                image: NetworkImage(story.image),
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+  }
+
+  // StoryItem listesi oluştur
+  return groupedStories.entries.map((entry) {
+    return StoryItem(
+      name: entry.key,
+      thumbnail: NetworkImage(stories
+          .firstWhere((story) => story.name == entry.key)
+          .thumbnail),
+      stories: entry.value, // List<Scaffold> parametresine uygun hale geldi
+    );
+  }).toList();
+}
 
   // SharedPreferences'ten telefon numarasını alıp Firebase'den kullanıcı verisini çekiyoruz
   Future<void> _loadUserData() async {
@@ -62,6 +115,8 @@ class _HomeState extends State<Home> {
       var data = await _firebaseService.getUserDataByPhone(phone);
       var food = await _firebaseService.getFoodOptionsFromRealtimeDatabase();
       var order = await _firebaseService.getOrdersByUserPhone(phone);
+      var adBanner = await _firebaseService.getAdBannersFromRealtimeDatabase();
+      var stories2 = await _firebaseService.fetchStories();
       var popularFoods =
           await _firebaseService.getPopularFoodsFromRealtimeDatabase();
       var campaigns = await _firebaseService.getCampaignsFromRealtimeDatabase();
@@ -69,6 +124,13 @@ class _HomeState extends State<Home> {
         setState(() {
           popularFood = popularFoods;
           orders = order;
+          stories = stories2;
+          storyItems = generateStoryItems(stories!);
+          adBanners = adBanner;
+          firsBanner = adBanners!.firstWhere(
+    (ad) => ad.index == 1,
+    orElse: () => AdBanner(image: "", index: 1, url: "", phone: ""),
+  );
           foodOptions = food;
           campaign = campaigns;
           userData = data; // Kullanıcı verisini state'e kaydediyoruz
@@ -100,7 +162,7 @@ class _HomeState extends State<Home> {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(
-                  top: 20.0,
+                  top: 10.0,
                   left: 20.0,
                   right: 20.0,
                 ),
@@ -159,14 +221,15 @@ class _HomeState extends State<Home> {
                   ],
                 ),
               ),
+             
               Padding(
                 padding: const EdgeInsets.only(
-                  top: 10.0,
+                  top: 5.0,
                   left: 20.0,
                   right: 20.0,
                 ),
                 child: Container(
-                  padding: EdgeInsets.all(15.0),
+                  padding: EdgeInsets.all(5.0),
                   decoration: BoxDecoration(
                     color: Colors.white, // Arka plan rengi
                     borderRadius: BorderRadius.circular(15.0),
@@ -183,30 +246,34 @@ class _HomeState extends State<Home> {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: 30.0,
-                            backgroundColor:
-                                theme.primaryColor.withOpacity(0.2),
-                            child: Image.asset("images/point.png"),
-                          ),
+                        CircleAvatar(
+  radius: 30.0,
+  backgroundColor: theme.primaryColor.withOpacity(0.2),
+  child: SizedBox(
+    width: 40.0, // Genişlik
+    height: 40.0, // Yükseklik
+    child: Image.asset("images/point.png"),
+  ),
+),
+
                           SizedBox(width: 15.0),
-                          Column(
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Almina Puanım",
+                                "Almina Puanım ",
                                 style: TextStyle(
                                   color: Colors.grey[700],
-                                  fontSize: 16.0,
+                                  fontSize: 12.0,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              SizedBox(height: 5.0),
+                              SizedBox(height: 15.0),
                               Text(
                                 userData!.point.toString(),
                                 style: TextStyle(
                                   color: theme.primaryColor,
-                                  fontSize: 22.0,
+                                  fontSize: 12.0,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -356,6 +423,21 @@ class _HomeState extends State<Home> {
                   ),
                 ),
               ),
+              if(setting!.isStorie) ...[
+              Container(
+                padding: EdgeInsets.only(left: 15),
+                child:  Column(
+          children: [
+            Stories(
+  circlePadding: 3,
+  storyItemList: storyItems,
+)
+          ],
+        ),
+      
+
+              ),
+              ],
               Container(
                 height: 107,
                 margin: const EdgeInsets.only(
@@ -387,27 +469,27 @@ class _HomeState extends State<Home> {
                             child: Column(
                               children: <Widget>[
                                 Container(
-                                  width: 70,
-                                  height: 70,
-                                  margin: const EdgeInsets.only(bottom: 10.0),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(5.0),
-                                    ),
-                                    image: DecorationImage(
-                                      image: AssetImage(
-                                        option.image,
-                                      ),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        blurRadius: 10.0,
-                                        color: Colors.grey,
-                                        offset: Offset(6.0, 6.0),
-                                      )
-                                    ],
-                                  ),
-                                ),
+  width: 70,
+  height: 70,
+  margin: const EdgeInsets.only(bottom: 10.0),
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.all(
+      Radius.circular(5.0),
+    ),
+    color: Colors.white,
+    image: DecorationImage(
+      image: AssetImage(option.image),
+      fit: BoxFit.contain, // Görüntüyü sabit bir alana sığdırır.
+    ),
+    boxShadow: [
+      BoxShadow(
+        blurRadius: 10.0,
+        color: Colors.grey,
+        offset: Offset(6.0, 6.0),
+      )
+    ],
+  ),
+),
                                 Text(
                                   option.name,
                                   style: TextStyle(fontSize: 17.0),
@@ -417,30 +499,9 @@ class _HomeState extends State<Home> {
                           ));
                     }),
               ),
-              Row(
-                children: [
-                  if (setting!.isCark) ...[
-                    Expanded(child: LuckyWheelCard()),
-                  ],
-                  if (setting!.isQuiz) ...[
-                    Expanded(child: QuizTimerWidget()),
-                  ]
-                ],
-              ),
-              BenimMasamBanner(
-                tableInfo: widget.tableInfo,
-                firebaseService: this._firebaseService,
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.only(left: 20.0, bottom: 10.0, top: 13),
-                child: Text(
-                  'Popüler Ürünler',
-                  style: TextStyle(fontSize: 21.0),
-                ),
-              ),
+             
               Container(
-                height: 225.0,
+                height: 240.0,
                 child: ListView.builder(
                   padding: const EdgeInsets.only(left: 10.0),
                   scrollDirection: Axis.horizontal,
@@ -474,6 +535,38 @@ class _HomeState extends State<Home> {
                   },
                 ),
               ),
+
+              BenimMasamBanner(
+                tableInfo: widget.tableInfo,
+                firebaseService: this._firebaseService,
+              ),
+
+              Row(
+                children: [
+                  if (setting!.isCark) ...[
+                    Expanded(child: LuckyWheelCard()),
+                  ],
+                  if (setting!.isQuiz) ...[
+                    Expanded(child: QuizTimerWidget()),
+                  ]
+                ],
+              ),
+              
+             if (setting!.isAdBanner1) ...[
+
+                if(firsBanner != null) ...[
+  PhoneBannerWidget(
+    imageUrl: firsBanner!.image,
+    phone: firsBanner!.phone,
+  )
+                ]else ...[
+PhoneBannerWidget(
+  )
+                ]
+  // AdBanner widget'ını oluşturuyoruz
+
+],
+          
               Row(
                 children: [
                   Expanded(
@@ -489,13 +582,14 @@ class _HomeState extends State<Home> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(
-                          left: 20.0, bottom: 10.0, top: 5.0),
+                          left: 21.0, bottom: 1.0, top: 8.0),
                       child: Text(
-                        'Son Kasa Siparişlerim',
+                        'Kasa Siparişlerim',
                         style: TextStyle(
-                            fontSize: 21.0,
+                            fontSize: 19.0,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87),
+                            fontFamily: "Cera Pro",
+                            color: const Color.fromARGB(221, 48, 37, 32)),
                       ),
                     ),
                     ListView.builder(
@@ -507,7 +601,7 @@ class _HomeState extends State<Home> {
                             orders![index]; // Her bir Order objesini alıyoruz
                         return Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0, vertical: 10.0),
+                              horizontal: 20.0, vertical: 5.0),
                           child: Container(
                             padding: EdgeInsets.all(15.0),
                             decoration: BoxDecoration(
@@ -589,7 +683,7 @@ class LuckyWheelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 20, horizontal: 5),
+      margin: EdgeInsets.only(left: 15, right: 15,top: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15), // Her köşe için border radius
       ),
@@ -715,7 +809,7 @@ class EventsPlaning extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       child: Card(
-        margin: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      margin: EdgeInsets.only(left: 10, right: 15,top: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
@@ -956,7 +1050,7 @@ class _BenimMasamBannerState extends State<BenimMasamBanner> {
           }
         },
         child: Card(
-          margin: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+          margin: EdgeInsets.only(left:15,right: 15,top:10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
@@ -1300,7 +1394,7 @@ class EventBanner extends StatelessWidget {
 
     return GestureDetector(
       child: Card(
-        margin: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      margin: EdgeInsets.only(left: 15, right: 15,top: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
@@ -1456,6 +1550,76 @@ class EventDetailsPopup extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class PhoneBannerWidget extends StatelessWidget {
+  final String? imageUrl;
+  final String? phone;
+
+  PhoneBannerWidget({this.imageUrl, this.phone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 60.0, // Maksimum yükseklik
+      margin: EdgeInsets.only(left: 15,right: 15,top: 10),
+   decoration: BoxDecoration(
+  gradient: LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF2C3E50), // Koyu mavi-yeşil ton
+      Color(0xFF34495E), // Koyu gri ton
+    ],
+  ),
+  boxShadow: [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.4),
+      spreadRadius: 2,
+      blurRadius: 8,
+      offset: Offset(0, 4), // Gölgenin konumu
+    ),
+  ],
+  borderRadius: BorderRadius.circular(15),
+),
+
+      child: imageUrl == null || phone == null
+          ? Center(
+              child: Text(
+                'Bu alana reklam verebilirsiniz', // Reklam yazısı
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : GestureDetector(            
+              onTap: () async {
+                if (phone != null) {
+                  final url = '$phone'; // Telefon numarasına arama yapmak için URL
+                  if (await canLaunch(url)) {
+                    await launch(url); // Telefonu arama işlemi
+                  } else {
+                    // Telefon numarası aramaya açılamıyorsa hata göster
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Telefon Numarası : $phone ',textAlign: TextAlign.center,),backgroundColor: Colors.blueGrey[400],),
+                    );
+                  }
+                }
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15), // Köşeleri yuvarlatma
+                child: Image.network(
+                  imageUrl!,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover, // Resmin container'ı kaplamasını sağlar
+                ),
+              ),
+            ),
     );
   }
 }
