@@ -28,6 +28,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+            debugShowCheckedModeBanner: false, // Debug yazısını kaldırır
+
       theme: ThemeData(
         fontFamily: "Cera Pro",
         primaryColor: Color(0xFFE85852),
